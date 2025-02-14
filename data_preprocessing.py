@@ -102,34 +102,38 @@ class DataPreprocessor:
 
     def standardize_features(self, columns=None):
         """
-        Standardize specified features
-
+        Standardize specified features while preserving original data
         Parameters:
         -----------
         columns : list, optional
             Columns to standardize
             If None, uses all numeric columns
-
         Returns:
         --------
         pandas.DataFrame
-            DataFrame with standardized features
+            DataFrame with added standardized features
         """
         df = self.processed_df.copy()
 
         # If no columns specified, use all numeric columns
         if columns is None:
-            columns = df.select_dtypes(include=[np.number]).columns
+            # Exclude certain columns from standardization
+            exclude_columns = ['Year', 'Demand (TWh)']
+            columns = [col for col in df.select_dtypes(include=[np.number]).columns
+                       if col not in exclude_columns]
 
         # Create scaler
         scaler = StandardScaler()
 
-        # Standardize specified columns
-        df[columns] = scaler.fit_transform(df[columns])
+        # Create standardized versions of columns
+        for col in columns:
+            # Only standardize if column exists and is numeric
+            if col in df.columns and pd.api.types.is_numeric_dtype(df[col]):
+                # Create standardized column with _std suffix
+                df[f'{col}_std'] = scaler.fit_transform(df[[col]])
 
         self.processed_df = df
         return df
-
     def save_processed_data(self, output_path=None):
         """
         Save processed data to a CSV file
