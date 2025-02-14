@@ -24,31 +24,37 @@ def get_asean_countries():
 def get_indicators():
     """Return dictionary of indicators to collect with their World Bank codes"""
     return {
-        # Economic Indicators
+        # Existing Economic Indicators
         'NY.GDP.MKTP.CD': 'GDP (current US$)',
         'NV.IND.TOTL.ZS': 'Industry (% of GDP)',
         'NV.IND.MANF.ZS': 'Manufacturing (% of GDP)',
         'BX.KLT.DINV.WD.GD.ZS': 'Foreign direct investment (% of GDP)',
         'EG.USE.PCAP.KG.OE': 'Energy use (kg of oil equivalent per capita)',
 
-        # Energy Indicators
+        # New Indicators
+        'EG.CFT.ACCS.ZS': 'Access to clean fuels and technologies for cooking',
+        'EG.RNW.TOTL.ZS': 'Renewable energy consumption (% of total final energy consumption)',
+        'EG.IMP.CONS.ZS': 'Energy imports (% of energy use)',
+        'SP.POP.GROW': 'Population growth rate',
+        'NY.GNP.PCAP.CD': 'GNI per capita',
+        'EN.ATM.GHGT.KT.CE': 'Total greenhouse gas emissions',
+
+        # Existing Energy Indicators
         'EG.USE.ELEC.KH.PC': 'Electric power consumption (kWh per capita)',
         'EG.ELC.ACCS.ZS': 'Access to electricity (% of population)',
         'EG.ELC.LOSS.ZS': 'Electric power transmission and distribution losses (% of output)',
         'EG.USE.COMM.FO.ZS': 'Fossil fuel energy consumption (% of total)',
 
-        # Development Indicators
+        # Existing Development Indicators
         'SP.URB.TOTL.IN.ZS': 'Urban population (% of total)',
         'SP.POP.TOTL': 'Population, total',
         'IT.NET.USER.ZS': 'Individuals using the Internet (% of population)',
         'IT.CEL.SETS.P2': 'Mobile cellular subscriptions (per 100 people)',
 
-        # Environmental Indicators
+        # Existing Environmental Indicators
         'EN.ATM.CO2E.PC': 'CO2 emissions (metric tons per capita)',
         'EN.ATM.PM25.MC.M3': 'PM2.5 air pollution (micrograms per cubic meter)'
     }
-
-
 def fetch_wb_data(country_code, indicator, start_year, end_year):
     """
     Fetch data from World Bank API using requests
