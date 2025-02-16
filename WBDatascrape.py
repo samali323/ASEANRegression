@@ -50,16 +50,34 @@ def get_indicators():
         'en_ghg_all_pc_ce_ar5': 'Total greenhouse gas emissions (per capita)'
     }
 
+import os
+import glob
+import pandas as pd
+
+
+def get_asean_countries():
+    """Return dictionary of ASEAN countries and their 3-letter codes"""
+    return {
+        'Brunei Darussalam': 'brn',
+        'Cambodia': 'khm',
+        'Indonesia': 'idn',
+        'Lao PDR': 'lao',
+        'Malaysia': 'mys',
+        'Myanmar': 'mmr',
+        'Philippines': 'phl',
+        'Singapore': 'sgp',
+        'Thailand': 'tha',
+        'Vietnam': 'vnm'
+    }
+
 
 def process_open_numbers_data(base_path):
     """
-    Process Open Numbers World Development Indicators data
-
+    Process Open Numbers World Development Indicators data and integrate 'Demand (TWh)' data.
     Parameters:
     -----------
     base_path : str
         Base directory containing the WDI data files
-
     Returns:
     --------
     dict
@@ -67,7 +85,6 @@ def process_open_numbers_data(base_path):
     """
     # Get ASEAN countries and their codes
     asean_countries = get_asean_countries()
-    indicators = get_indicators()
 
     # Create output directory
     output_dir = os.path.join(base_path, 'processed_asean_data')
@@ -80,10 +97,9 @@ def process_open_numbers_data(base_path):
     all_files = glob.glob(os.path.join(base_path, '**', 'ddf--datapoints--*--by--geo--time.csv'), recursive=True)
 
     # Process each indicator
-    for indicator_code, indicator_name in indicators.items():
+    for indicator_code, indicator_name in get_indicators().items():
         # Find matching file
         matching_files = [f for f in all_files if f.endswith(f'--datapoints--{indicator_code}--by--geo--time.csv')]
-
         if not matching_files:
             print(f"No file found for indicator: {indicator_code} - {indicator_name}")
             continue
@@ -99,7 +115,6 @@ def process_open_numbers_data(base_path):
         for country_name, country_code in asean_countries.items():
             # Filter data for this country
             country_rows = df[df['geo'] == country_code].copy()
-
             if country_rows.empty:
                 print(f"No data found for {country_name} in {indicator_name}")
                 continue
@@ -125,18 +140,58 @@ def process_open_numbers_data(base_path):
                 how='left'
             )
 
+    # Add 'Demand (TWh)' data from CSV
+    demand_file = os.path.join(output_dir, 'demand_data.csv')  # Path to your demand data file
+    if os.path.exists(demand_file):
+        try:
+            # Read the demand data CSV
+            demand_df = pd.read_csv(demand_file)
+
+            # Clean up 'Demand (TWh)' column (remove non-numeric values)
+            demand_df['Demand (TWh)'] = pd.to_numeric(demand_df['Demand (TWh)'], errors='coerce')
+
+            # Ensure 'Year' column is of type int64
+            demand_df['Year'] = pd.to_numeric(demand_df['Year'], errors='coerce').astype('Int64')
+
+            # Add missing rows for each country up to 2035
+            full_demand_data = []
+            for country_name in asean_countries.keys():
+                country_demand = demand_df[demand_df['Country'] == country_name]
+                if country_demand.empty:
+                    # If no data exists for the country, create a new DataFrame with years 2000-2035
+                    full_years = pd.DataFrame({'Year': range(2000, 2036)})
+                    full_years['Country'] = country_name
+                    full_years['Demand (TWh)'] = None  # No demand data available
+                    full_demand_data.append(full_years)
+                else:
+                    # Ensure all years from 2000 to 2035 are present
+                    full_years = pd.DataFrame({'Year': range(2000, 2036)})
+                    full_years['Country'] = country_name
+                    full_years = full_years.merge(country_demand, on=['Year', 'Country'], how='left')
+                    full_demand_data.append(full_years)
+
+            # Combine all country data into a single DataFrame
+            demand_df = pd.concat(full_demand_data, ignore_index=True)
+
+            # Merge 'Demand (TWh)' into each country's data
+            for country_name, df in country_data.items():
+                country_demand = demand_df[demand_df['Country'] == country_name]
+                df = df.merge(country_demand[['Year', 'Demand (TWh)']], on='Year', how='left')
+                country_data[country_name] = df
+        except Exception as e:
+            print(f"Error processing demand data from CSV: {e}")
+    else:
+        print("Demand data file not found. Skipping 'Demand (TWh)' integration.")
+
     # Save individual country files and create combined dataset
     combined_data = pd.DataFrame()
-
     for country_name, df in country_data.items():
         # Add country column
         df['Country'] = country_name
-
         # Save individual country file
         output_filename = os.path.join(output_dir, f'{country_name.replace(" ", "_")}_open_numbers_data.csv')
         df.to_csv(output_filename, index=False)
         print(f"Saved data for {country_name} to {output_filename}")
-
         # Append to combined dataset
         combined_data = pd.concat([combined_data, df], ignore_index=True)
 
@@ -144,7 +199,6 @@ def process_open_numbers_data(base_path):
     combined_output_filename = os.path.join(output_dir, 'ASEAN_combined_open_numbers_data.csv')
     combined_data.to_csv(combined_output_filename, index=False)
     print(f"\nSaved combined dataset to {combined_output_filename}")
-
     return country_data
 
 
