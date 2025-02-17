@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import self
+import seaborn as sns
 from sklearn.preprocessing import StandardScaler
 from scipy import stats
 import statsmodels.api as sm
@@ -200,14 +202,42 @@ class ASEANForecaster:
             all_indicator_forecasts[indicator] = forecast
         return all_indicator_forecasts
 
+    def plot_correlation_matrix(self):
+        """
+        Plot a correlation matrix for the indicators
+        """
+        if not hasattr(self, 'data') or self.data is None:
+            raise AttributeError("Data has not been initialized. Ensure load_and_preprocess_data has been called.")
 
+        # Combine data for all countries
+        combined_data = self.data.groupby('Year')[self.indicators].mean().dropna()
+
+        # Compute correlation matrix
+        correlation_matrix = combined_data.corr()
+
+        # Plot heatmap
+        plt.figure(figsize=(12, 10))
+        sns.heatmap(correlation_matrix, annot=True, fmt=".2f", cmap="coolwarm", cbar=True)
+        plt.title("Correlation Matrix of Indicators", fontsize=16)
+        plt.xticks(rotation=45, ha='right', fontsize=10)
+        plt.yticks(fontsize=10)
+
+        # Save the plot
+        os.makedirs("plots", exist_ok=True)
+        plot_path = os.path.join("plots", "correlation_matrix.png")
+        plt.savefig(plot_path)
+        plt.close()
+        print(f"Saved correlation matrix plot to {plot_path}")
 def main():
     # Initialize forecaster
     forecaster = ASEANForecaster('ASEAN_2035.csv')
+
+    # Plot correlation matrix
+    forecaster.plot_correlation_matrix()
+
     # Forecast all indicators
     forecasts = forecaster.forecast_all_indicators()
     print("Forecasting complete!")
-
 
 if __name__ == "__main__":
     main()
