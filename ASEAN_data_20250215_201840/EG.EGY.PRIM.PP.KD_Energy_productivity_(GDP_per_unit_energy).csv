@@ -1,0 +1,361 @@
+country_code,country_name,year,Energy productivity (GDP per unit energy)
+BRN,Brunei Darussalam,2000,4.34
+BRN,Brunei Darussalam,2001,3.91
+BRN,Brunei Darussalam,2002,3.68
+BRN,Brunei Darussalam,2003,4.15
+BRN,Brunei Darussalam,2004,3.79
+BRN,Brunei Darussalam,2005,3.65
+BRN,Brunei Darussalam,2006,4.96
+BRN,Brunei Darussalam,2007,5.07
+BRN,Brunei Darussalam,2008,5.68
+BRN,Brunei Darussalam,2009,4.97
+BRN,Brunei Darussalam,2010,5.15
+BRN,Brunei Darussalam,2011,5.94
+BRN,Brunei Darussalam,2012,5.82
+BRN,Brunei Darussalam,2013,4.72
+BRN,Brunei Darussalam,2014,5.66
+BRN,Brunei Darussalam,2015,4.34
+BRN,Brunei Darussalam,2016,4.91
+BRN,Brunei Darussalam,2017,5.87
+BRN,Brunei Darussalam,2018,5.88
+BRN,Brunei Darussalam,2019,6.35
+BRN,Brunei Darussalam,2020,6.31
+BRN,Brunei Darussalam,2021,6.33
+,,2022,6.33
+,,2023,6.33
+,,2024,6.33
+,,2025,6.33
+,,2026,6.33
+,,2027,6.33
+,,2028,6.33
+,,2029,6.33
+,,2030,6.33
+,,2031,6.33
+,,2032,6.33
+,,2033,6.33
+,,2034,6.33
+,,2035,6.33
+IDN,Indonesia,2000,5.5
+IDN,Indonesia,2001,5.43
+IDN,Indonesia,2002,5.38
+IDN,Indonesia,2003,5.15
+IDN,Indonesia,2004,5.22
+IDN,Indonesia,2005,5.02
+IDN,Indonesia,2006,4.86
+IDN,Indonesia,2007,4.55
+IDN,Indonesia,2008,4.31
+IDN,Indonesia,2009,4.35
+IDN,Indonesia,2010,4.26
+IDN,Indonesia,2011,4.1
+IDN,Indonesia,2012,3.84
+IDN,Indonesia,2013,3.53
+IDN,Indonesia,2014,3.48
+IDN,Indonesia,2015,3.26
+IDN,Indonesia,2016,3.18
+IDN,Indonesia,2017,3.14
+IDN,Indonesia,2018,3.24
+IDN,Indonesia,2019,3.19
+IDN,Indonesia,2020,3.11
+IDN,Indonesia,2021,3.04
+,,2022,3.04
+,,2023,3.04
+,,2024,3.04
+,,2025,3.04
+,,2026,3.04
+,,2027,3.04
+,,2028,3.04
+,,2029,3.04
+,,2030,3.04
+,,2031,3.04
+,,2032,3.04
+,,2033,3.04
+,,2034,3.04
+,,2035,3.04
+KHM,Cambodia,2000,7.94
+KHM,Cambodia,2001,7.51
+KHM,Cambodia,2002,7.05
+KHM,Cambodia,2003,6.69
+KHM,Cambodia,2004,6.23
+KHM,Cambodia,2005,5.73
+KHM,Cambodia,2006,5.31
+KHM,Cambodia,2007,5.03
+KHM,Cambodia,2008,4.76
+KHM,Cambodia,2009,5.07
+KHM,Cambodia,2010,5.05
+KHM,Cambodia,2011,4.81
+KHM,Cambodia,2012,4.68
+KHM,Cambodia,2013,4.47
+KHM,Cambodia,2014,4.5
+KHM,Cambodia,2015,4.58
+KHM,Cambodia,2016,4.74
+KHM,Cambodia,2017,4.59
+KHM,Cambodia,2018,4.58
+KHM,Cambodia,2019,4.85
+KHM,Cambodia,2020,5.09
+KHM,Cambodia,2021,4.96
+,,2022,4.96
+,,2023,4.96
+,,2024,4.96
+,,2025,4.96
+,,2026,4.96
+,,2027,4.96
+,,2028,4.96
+,,2029,4.96
+,,2030,4.96
+,,2031,4.96
+,,2032,4.96
+,,2033,4.96
+,,2034,4.96
+,,2035,4.96
+LAO,Lao PDR,2000,3.8
+LAO,Lao PDR,2001,3.78
+LAO,Lao PDR,2002,3.65
+LAO,Lao PDR,2003,3.55
+LAO,Lao PDR,2004,3.42
+LAO,Lao PDR,2005,3.31
+LAO,Lao PDR,2006,3.37
+LAO,Lao PDR,2007,3.36
+LAO,Lao PDR,2008,3.48
+LAO,Lao PDR,2009,3.44
+LAO,Lao PDR,2010,3.3
+LAO,Lao PDR,2011,3.1
+LAO,Lao PDR,2012,2.93
+LAO,Lao PDR,2013,2.98
+LAO,Lao PDR,2014,2.93
+LAO,Lao PDR,2015,3.83
+LAO,Lao PDR,2016,4.75
+LAO,Lao PDR,2017,4.9
+LAO,Lao PDR,2018,4.7
+LAO,Lao PDR,2019,4.3
+LAO,Lao PDR,2020,4.37
+LAO,Lao PDR,2021,4.25
+LAO,Lao PDR,2022,4.51
+,,2023,4.51
+,,2024,4.51
+,,2025,4.51
+,,2026,4.51
+,,2027,4.51
+,,2028,4.51
+,,2029,4.51
+,,2030,4.51
+,,2031,4.51
+,,2032,4.51
+,,2033,4.51
+,,2034,4.51
+,,2035,4.51
+MMR,Myanmar,2000,10.44
+MMR,Myanmar,2001,9.07
+MMR,Myanmar,2002,8.53
+MMR,Myanmar,2003,8.17
+MMR,Myanmar,2004,7.46
+MMR,Myanmar,2005,6.58
+MMR,Myanmar,2006,5.88
+MMR,Myanmar,2007,5.41
+MMR,Myanmar,2008,4.84
+MMR,Myanmar,2009,4.38
+MMR,Myanmar,2010,4.02
+MMR,Myanmar,2011,3.86
+MMR,Myanmar,2012,3.97
+MMR,Myanmar,2013,3.87
+MMR,Myanmar,2014,3.93
+MMR,Myanmar,2015,3.77
+MMR,Myanmar,2016,3.8
+MMR,Myanmar,2017,4.14
+MMR,Myanmar,2018,3.91
+MMR,Myanmar,2019,3.67
+MMR,Myanmar,2020,3.53
+MMR,Myanmar,2021,4.17
+,,2022,4.17
+,,2023,4.17
+,,2024,4.17
+,,2025,4.17
+,,2026,4.17
+,,2027,4.17
+,,2028,4.17
+,,2029,4.17
+,,2030,4.17
+,,2031,4.17
+,,2032,4.17
+,,2033,4.17
+,,2034,4.17
+,,2035,4.17
+MYS,Malaysia,2000,5.46
+MYS,Malaysia,2001,5.65
+MYS,Malaysia,2002,5.54
+MYS,Malaysia,2003,5.61
+MYS,Malaysia,2004,5.66
+MYS,Malaysia,2005,5.85
+MYS,Malaysia,2006,5.57
+MYS,Malaysia,2007,5.59
+MYS,Malaysia,2008,5.65
+MYS,Malaysia,2009,5.42
+MYS,Malaysia,2010,5.23
+MYS,Malaysia,2011,5.18
+MYS,Malaysia,2012,4.99
+MYS,Malaysia,2013,5.38
+MYS,Malaysia,2014,5.18
+MYS,Malaysia,2015,4.72
+MYS,Malaysia,2016,4.69
+MYS,Malaysia,2017,4.28
+MYS,Malaysia,2018,4.5
+MYS,Malaysia,2019,4.44
+MYS,Malaysia,2020,4.49
+MYS,Malaysia,2021,4.49
+,,2022,4.49
+,,2023,4.49
+,,2024,4.49
+,,2025,4.49
+,,2026,4.49
+,,2027,4.49
+,,2028,4.49
+,,2029,4.49
+,,2030,4.49
+,,2031,4.49
+,,2032,4.49
+,,2033,4.49
+,,2034,4.49
+,,2035,4.49
+PHL,Philippines,2000,4.68
+PHL,Philippines,2001,4.32
+PHL,Philippines,2002,4.23
+PHL,Philippines,2003,4.02
+PHL,Philippines,2004,3.74
+PHL,Philippines,2005,3.67
+PHL,Philippines,2006,3.45
+PHL,Philippines,2007,3.32
+PHL,Philippines,2008,3.34
+PHL,Philippines,2009,3.21
+PHL,Philippines,2010,3.13
+PHL,Philippines,2011,3.05
+PHL,Philippines,2012,2.97
+PHL,Philippines,2013,2.87
+PHL,Philippines,2014,2.89
+PHL,Philippines,2015,2.95
+PHL,Philippines,2016,2.91
+PHL,Philippines,2017,2.89
+PHL,Philippines,2018,2.8
+PHL,Philippines,2019,2.66
+PHL,Philippines,2020,2.78
+PHL,Philippines,2021,2.78
+,,2022,2.78
+,,2023,2.78
+,,2024,2.78
+,,2025,2.78
+,,2026,2.78
+,,2027,2.78
+,,2028,2.78
+,,2029,2.78
+,,2030,2.78
+,,2031,2.78
+,,2032,2.78
+,,2033,2.78
+,,2034,2.78
+,,2035,2.78
+SGP,Singapore,2000,3.47
+SGP,Singapore,2001,4.0
+SGP,Singapore,2002,3.82
+SGP,Singapore,2003,4.42
+SGP,Singapore,2004,4.83
+SGP,Singapore,2005,3.08
+SGP,Singapore,2006,3.03
+SGP,Singapore,2007,2.57
+SGP,Singapore,2008,2.9
+SGP,Singapore,2009,3.13
+SGP,Singapore,2010,2.55
+SGP,Singapore,2011,2.13
+SGP,Singapore,2012,2.37
+SGP,Singapore,2013,2.54
+SGP,Singapore,2014,2.68
+SGP,Singapore,2015,2.74
+SGP,Singapore,2016,2.73
+SGP,Singapore,2017,2.77
+SGP,Singapore,2018,2.47
+SGP,Singapore,2019,2.61
+SGP,Singapore,2020,2.71
+SGP,Singapore,2021,2.51
+,,2022,2.51
+,,2023,2.51
+,,2024,2.51
+,,2025,2.51
+,,2026,2.51
+,,2027,2.51
+,,2028,2.51
+,,2029,2.51
+,,2030,2.51
+,,2031,2.51
+,,2032,2.51
+,,2033,2.51
+,,2034,2.51
+,,2035,2.51
+THA,Thailand,2000,4.93
+THA,Thailand,2001,4.9
+THA,Thailand,2002,5.1
+THA,Thailand,2003,5.15
+THA,Thailand,2004,5.24
+THA,Thailand,2005,5.18
+THA,Thailand,2006,5.03
+THA,Thailand,2007,4.95
+THA,Thailand,2008,4.99
+THA,Thailand,2009,5.0
+THA,Thailand,2010,5.1
+THA,Thailand,2011,5.05
+THA,Thailand,2012,5.05
+THA,Thailand,2013,5.29
+THA,Thailand,2014,5.22
+THA,Thailand,2015,5.07
+THA,Thailand,2016,5.04
+THA,Thailand,2017,4.82
+THA,Thailand,2018,4.53
+THA,Thailand,2019,4.53
+THA,Thailand,2020,4.59
+THA,Thailand,2021,4.44
+,,2022,4.44
+,,2023,4.44
+,,2024,4.44
+,,2025,4.44
+,,2026,4.44
+,,2027,4.44
+,,2028,4.44
+,,2029,4.44
+,,2030,4.44
+,,2031,4.44
+,,2032,4.44
+,,2033,4.44
+,,2034,4.44
+,,2035,4.44
+VNM,Vietnam,2000,4.21
+VNM,Vietnam,2001,4.2
+VNM,Vietnam,2002,4.28
+VNM,Vietnam,2003,4.19
+VNM,Vietnam,2004,4.31
+VNM,Vietnam,2005,4.25
+VNM,Vietnam,2006,4.07
+VNM,Vietnam,2007,4.09
+VNM,Vietnam,2008,4.14
+VNM,Vietnam,2009,4.29
+VNM,Vietnam,2010,4.44
+VNM,Vietnam,2011,4.18
+VNM,Vietnam,2012,4.01
+VNM,Vietnam,2013,3.91
+VNM,Vietnam,2014,4.11
+VNM,Vietnam,2015,3.54
+VNM,Vietnam,2016,3.65
+VNM,Vietnam,2017,3.55
+VNM,Vietnam,2018,3.9
+VNM,Vietnam,2019,4.09
+VNM,Vietnam,2020,4.03
+VNM,Vietnam,2021,3.85
+,,2022,3.85
+,,2023,3.85
+,,2024,3.85
+,,2025,3.85
+,,2026,3.85
+,,2027,3.85
+,,2028,3.85
+,,2029,3.85
+,,2030,3.85
+,,2031,3.85
+,,2032,3.85
+,,2033,3.85
+,,2034,3.85
+,,2035,3.85

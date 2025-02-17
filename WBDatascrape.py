@@ -1,238 +1,224 @@
-import pandas as pd
-import numpy as np
-import requests
-from datetime import datetime
 import os
 import glob
+import pandas as pd
+
 
 def get_asean_countries():
-    """Return dictionary of ASEAN countries and their World Bank codes"""
+    """Return dictionary of ASEAN countries and their 3-letter codes"""
     return {
-        'Brunei Darussalam': 'BRN',
-        'Cambodia': 'KHM',
-        'Indonesia': 'IDN',
-        'Lao PDR': 'LAO',
-        'Malaysia': 'MYS',
-        'Myanmar': 'MMR',
-        'Philippines': 'PHL',
-        'Singapore': 'SGP',
-        'Thailand': 'THA',
-        'Vietnam': 'VNM'
+        'Brunei Darussalam': 'brn',
+        'Cambodia': 'khm',
+        'Indonesia': 'idn',
+        'Lao PDR': 'lao',
+        'Malaysia': 'mys',
+        'Myanmar': 'mmr',
+        'Philippines': 'phl',
+        'Singapore': 'sgp',
+        'Thailand': 'tha',
+        'Vietnam': 'vnm'
     }
+
 
 def get_indicators():
-    """Return dictionary of indicators to collect with their World Bank codes"""
+    """Return dictionary of indicators to collect with their codes"""
     return {
         # Economic Indicators
-        'NY.GDP.MKTP.CD': 'GDP (current US$)',
-        'NV.IND.TOTL.ZS': 'Industry (% of GDP)',
-        'NV.IND.MANF.ZS': 'Manufacturing (% of GDP)',
-        'BX.KLT.DINV.WD.GD.ZS': 'Foreign direct investment (% of GDP)',
-        'EG.USE.PCAP.KG.OE': 'Energy use (kg of oil equivalent per capita)',
+        'ny_gdp_mktp_cd': 'GDP (current US$)',
+        'ny_gnp_pcap_cd': 'GNI per capita',
+        'nv_ind_totl_zs': 'Industry (% of GDP)',
+        'nv_ind_manf_zs': 'Manufacturing (% of GDP)',
+        'bx_klt_dinv_wd_gd_zs': 'Foreign direct investment (% of GDP)',
 
-        # New Indicators
-        'EG.CFT.ACCS.ZS': 'Access to clean fuels and technologies for cooking',
-        'EG.RNW.TOTL.ZS': 'Renewable energy consumption (% of total final energy consumption)',
-        'EG.IMP.CONS.ZS': 'Energy imports (% of energy use)',
-        'SP.POP.GROW': 'Population growth rate',
-        'NY.GNP.PCAP.CD': 'GNI per capita',
-        'EN.ATM.GHGT.KT.CE': 'Total greenhouse gas emissions',
+        # Population Indicators
+        'sp_pop_totl': 'Population, total',
+        'sp_urb_totl_in_zs': 'Urban population (% of total)',
+        'sp_pop_grow': 'Population growth (annual %)',
 
         # Energy Indicators
-        'EG.USE.ELEC.KH.PC': 'Electric power consumption (kWh per capita)',
-        'EG.ELC.ACCS.ZS': 'Access to electricity (% of population)',
-        'EG.ELC.LOSS.ZS': 'Electric power transmission and distribution losses (% of output)',
-        'EG.USE.COMM.FO.ZS': 'Fossil fuel energy consumption (% of total)',
+        'eg_use_pcap_kg_oe': 'Energy use (kg of oil equivalent per capita)',
+        'eg_use_elec_kh_pc': 'Electric power consumption (kWh per capita)',
+        'eg_elc_accs_zs': 'Access to electricity (% of population)',
+        'eg_use_comm_fo_zs': 'Fossil fuel energy consumption (% of total)',
 
-        # Development Indicators
-        'SP.URB.TOTL.IN.ZS': 'Urban population (% of total)',
-        'SP.POP.TOTL': 'Population, total',
-        'IT.NET.USER.ZS': 'Individuals using the Internet (% of population)',
-        'IT.CEL.SETS.P2': 'Mobile cellular subscriptions (per 100 people)',
+        # Technology Indicators
+        'it_net_user_zs': 'Individuals using the Internet (% of population)',
+        'it_cel_sets_p2': 'Mobile cellular subscriptions (per 100 people)',
 
         # Environmental Indicators
-        'EN.ATM.CO2E.PC': 'CO2 emissions (metric tons per capita)',
-        'EN.ATM.PM25.MC.M3': 'PM2.5 air pollution (micrograms per cubic meter)'
+        'en_atm_pm25_mc_m3': 'PM2.5 air pollution (micrograms per cubic meter)',
+        'en_ghg_co2_pc_ce_ar5': 'CO2 emissions (metric tons per capita)',
+        'en_ghg_all_pc_ce_ar5': 'Total greenhouse gas emissions (per capita)'
     }
 
-def fetch_wb_data(country_code, indicator, start_year, end_year):
-    """
-    Fetch data from World Bank API using requests
+import os
+import glob
+import pandas as pd
 
+
+def get_asean_countries():
+    """Return dictionary of ASEAN countries and their 3-letter codes"""
+    return {
+        'Brunei Darussalam': 'brn',
+        'Cambodia': 'khm',
+        'Indonesia': 'idn',
+        'Lao PDR': 'lao',
+        'Malaysia': 'mys',
+        'Myanmar': 'mmr',
+        'Philippines': 'phl',
+        'Singapore': 'sgp',
+        'Thailand': 'tha',
+        'Vietnam': 'vnm'
+    }
+
+
+def process_open_numbers_data(base_path):
+    """
+    Process Open Numbers World Development Indicators data and integrate 'Demand (TWh)' data.
     Parameters:
     -----------
-    country_code : str
-        Country code
-    indicator : str
-        World Bank indicator code
-    start_year : int
-        Start year for data collection
-    end_year : int
-        End year for data collection
-
+    base_path : str
+        Base directory containing the WDI data files
     Returns:
     --------
-    pandas.Series
-        Time series of indicator values
+    dict
+        Dictionary of DataFrames for each ASEAN country
     """
-    base_url = "http://api.worldbank.org/v2/country"
-    url = f"{base_url}/{country_code}/indicator/{indicator}?format=json&date={start_year}:{end_year}"
-
-    try:
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            if len(data) > 1:  # World Bank API returns metadata in first element
-                values = {}
-                for entry in data[1]:
-                    if entry['value'] is not None:
-                        values[int(entry['date'])] = entry['value']
-                return pd.Series(values)
-        return pd.Series()
-    except Exception as e:
-        print(f"Error fetching data for {country_code}, {indicator}: {str(e)}")
-        return pd.Series()
-
-def collect_worldbank_data(start_year=2000, end_year=2022):
-    """
-    Collect World Bank data for ASEAN countries
-
-    Parameters:
-    -----------
-    start_year : int, optional
-        Start year for data collection (default 2000)
-    end_year : int, optional
-        End year for data collection (default 2022)
-
-    Returns:
-    --------
-    tuple
-        Dictionary of country-specific DataFrames and combined DataFrame
-    """
-    # Get countries and indicators
-    countries = get_asean_countries()
-    indicators = get_indicators()
+    # Get ASEAN countries and their codes
+    asean_countries = get_asean_countries()
 
     # Create output directory
-    output_dir = 'worldbank_data'
+    output_dir = os.path.join(base_path, 'processed_asean_data')
     os.makedirs(output_dir, exist_ok=True)
 
-    # Initialize dictionary for country data
+    # Prepare storage for processed data
     country_data = {}
 
-    # Timestamp for this data collection run
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+    # Find all datapoint files
+    all_files = glob.glob(os.path.join(base_path, '**', 'ddf--datapoints--*--by--geo--time.csv'), recursive=True)
 
-    # Progress tracking
-    total_indicators = len(indicators)
-    total_countries = len(countries)
+    # Process each indicator
+    for indicator_code, indicator_name in get_indicators().items():
+        # Find matching file
+        matching_files = [f for f in all_files if f.endswith(f'--datapoints--{indicator_code}--by--geo--time.csv')]
+        if not matching_files:
+            print(f"No file found for indicator: {indicator_code} - {indicator_name}")
+            continue
 
-    print(f"Collecting World Bank data from {start_year} to {end_year}")
-    print(f"Total indicators: {total_indicators}")
-    print(f"Total countries: {total_countries}\n")
+        # Read the file
+        try:
+            df = pd.read_csv(matching_files[0])
+        except Exception as e:
+            print(f"Error reading file for {indicator_code}: {e}")
+            continue
 
-    # Collect data for each country
-    for country_name, country_code in countries.items():
-        print(f"Collecting data for {country_name} ({country_code})...")
+        # Process data for each ASEAN country
+        for country_name, country_code in asean_countries.items():
+            # Filter data for this country
+            country_rows = df[df['geo'] == country_code].copy()
+            if country_rows.empty:
+                print(f"No data found for {country_name} in {indicator_name}")
+                continue
 
-        country_df = pd.DataFrame(index=range(start_year, end_year + 1))
-        country_df.index.name = 'Year'
-        # Instead of using index, explicitly add the Year column
-        country_df['Year'] = range(start_year, end_year + 1)
-        # Collect each indicator
-        for i, (indicator_code, indicator_name) in enumerate(indicators.items(), 1):
-            print(f"  Collecting {indicator_name} ({i}/{total_indicators})...", end=' ')
+            # Rename columns
+            country_rows = country_rows.rename(columns={
+                'time': 'Year',
+                country_rows.columns[2]: indicator_name
+            })
 
-            # Fetch data for this indicator
-            series = fetch_wb_data(country_code, indicator_code, start_year, end_year)
+            # Initialize country DataFrame if not exists
+            if country_name not in country_data:
+                year_range = range(
+                    country_rows['Year'].min(),
+                    country_rows['Year'].max() + 1
+                )
+                country_data[country_name] = pd.DataFrame({'Year': year_range})
 
-            if not series.empty:
-                country_df[indicator_name] = series
-                print(f"✓ ({len(series)} years)")
-            else:
-                print("✗ No data")
-
-        # Calculate electricity demand (placeholder - you might want to refine this)
-        if 'Electric power consumption (kWh per capita)' in country_df.columns and 'Population, total' in country_df.columns:
-            country_df['Demand (TWh)'] = (
-                    country_df['Electric power consumption (kWh per capita)'] *
-                    country_df['Population, total'] / 1_000_000
+            # Merge data
+            country_data[country_name] = country_data[country_name].merge(
+                country_rows[['Year', indicator_name]],
+                on='Year',
+                how='left'
             )
 
-        # Save country-specific data
-        country_data[country_name] = country_df
-        filename = f"{output_dir}/{country_name.replace(' ', '_')}_{timestamp}.csv"
-        country_df.to_csv(filename, index=False)
+    # Add 'Demand (TWh)' data from CSV
+    demand_file = os.path.join(output_dir, 'demand_data.csv')  # Path to your demand data file
+    if os.path.exists(demand_file):
+        try:
+            # Read the demand data CSV
+            demand_df = pd.read_csv(demand_file)
 
-        # Print data availability summary
-        print(f"\nData availability summary for {country_name}:")
-        for column in country_df.columns:
-            available = country_df[column].count()
-            total = len(country_df)
-            print(f"  {column}: {available}/{total} years ({available / total * 100:.1f}%)")
-        print(f"Saved to: {filename}\n")
+            # Clean up 'Demand (TWh)' column (remove non-numeric values)
+            demand_df['Demand (TWh)'] = pd.to_numeric(demand_df['Demand (TWh)'], errors='coerce')
 
-    # Create and save combined dataset
-    print("Creating combined dataset...")
+            # Ensure 'Year' column is of type int64
+            demand_df['Year'] = pd.to_numeric(demand_df['Year'], errors='coerce').astype('Int64')
+
+            # Add missing rows for each country up to 2035
+            full_demand_data = []
+            for country_name in asean_countries.keys():
+                country_demand = demand_df[demand_df['Country'] == country_name]
+                if country_demand.empty:
+                    # If no data exists for the country, create a new DataFrame with years 2000-2035
+                    full_years = pd.DataFrame({'Year': range(2000, 2036)})
+                    full_years['Country'] = country_name
+                    full_years['Demand (TWh)'] = None  # No demand data available
+                    full_demand_data.append(full_years)
+                else:
+                    # Ensure all years from 2000 to 2035 are present
+                    full_years = pd.DataFrame({'Year': range(2000, 2036)})
+                    full_years['Country'] = country_name
+                    full_years = full_years.merge(country_demand, on=['Year', 'Country'], how='left')
+                    full_demand_data.append(full_years)
+
+            # Combine all country data into a single DataFrame
+            demand_df = pd.concat(full_demand_data, ignore_index=True)
+
+            # Merge 'Demand (TWh)' into each country's data
+            for country_name, df in country_data.items():
+                country_demand = demand_df[demand_df['Country'] == country_name]
+                df = df.merge(country_demand[['Year', 'Demand (TWh)']], on='Year', how='left')
+                country_data[country_name] = df
+        except Exception as e:
+            print(f"Error processing demand data from CSV: {e}")
+    else:
+        print("Demand data file not found. Skipping 'Demand (TWh)' integration.")
+
+    # Save individual country files and create combined dataset
     combined_data = pd.DataFrame()
-
     for country_name, df in country_data.items():
-        df_copy = df.copy()
-        df_copy['Country'] = country_name
-        combined_data = pd.concat([combined_data, df_copy])
+        # Add country column
+        df['Country'] = country_name
+        # Save individual country file
+        output_filename = os.path.join(output_dir, f'{country_name.replace(" ", "_")}_open_numbers_data.csv')
+        df.to_csv(output_filename, index=False)
+        print(f"Saved data for {country_name} to {output_filename}")
+        # Append to combined dataset
+        combined_data = pd.concat([combined_data, df], ignore_index=True)
 
     # Save combined dataset
-    combined_filename = f"{output_dir}/ASEAN_combined_{timestamp}.csv"
-    combined_data.to_csv(combined_filename, index=True)
-    print(f"Saved combined dataset to: {combined_filename}")
+    combined_output_filename = os.path.join(output_dir, 'ASEAN_combined_open_numbers_data.csv')
+    combined_data.to_csv(combined_output_filename, index=False)
+    print(f"\nSaved combined dataset to {combined_output_filename}")
+    return country_data
 
-    return country_data, combined_data
-
-def analyze_data_completeness(country_data):
-    """
-    Analyze and print data completeness statistics
-
-    Parameters:
-    -----------
-    country_data : dict
-        Dictionary of country DataFrames
-    """
-    print("\nDATA COMPLETENESS ANALYSIS")
-    print("=" * 30)
-
-    # Overall completeness
-    all_dataframes = list(country_data.values())
-    total_indicators = len(all_dataframes[0].columns)
-
-    print(f"Total Indicators: {total_indicators}")
-
-    # Completeness by country
-    for country, df in country_data.items():
-        total_possible = len(df) * len(df.columns)
-        total_actual = df.count().sum()
-        completeness = (total_actual / total_possible) * 100
-
-        print(f"\n{country}:")
-        print(f"  Overall completeness: {completeness:.1f}%")
-
-        # Indicators with most missing data
-        missing = df.isnull().sum().sort_values(ascending=False)
-        print("  Indicators with most missing data:")
-        for indicator, count in missing[missing > 0].head().items():
-            print(f"    - {indicator}: {count} years missing ({count/len(df)*100:.1f}%)")
 
 def main():
-    try:
-        # Collect data
-        country_data, combined_data = collect_worldbank_data()
+    # Path to the World Development Indicators data
+    base_path = r'C:\Users\samal\Documents\ddf--open_numbers--world_development_indicators-master'
 
-        # Analyze completeness
-        analyze_data_completeness(country_data)
+    # Process the data
+    processed_data = process_open_numbers_data(base_path)
 
-    except Exception as e:
-        print(f"An error occurred: {str(e)}")
-        import traceback
-        traceback.print_exc()
+    # Print data availability summary
+    for country, df in processed_data.items():
+        print(f"\n{country} Data Summary:")
+        print(f"  Years covered: {df['Year'].min()} to {df['Year'].max()}")
+        print("  Data availability:")
+        for column in df.columns:
+            if column not in ['Year', 'Country']:
+                availability = (df[column].notna().sum() / len(df)) * 100
+                print(f"    {column}: {availability:.1f}%")
+
 
 if __name__ == "__main__":
     main()
