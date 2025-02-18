@@ -264,7 +264,7 @@ class ASEANForecaster:
         # Save the plot with a higher DPI
         os.makedirs("plots", exist_ok=True)
         plot_path = os.path.join("correlation_matrix.png")
-        plt.savefig(plot_path, dpi=300, bbox_inches='tight')  # Set DPI to 300
+        plt.savefig(plot_path, dpi=400, bbox_inches='tight')  # Set DPI to 300
         plt.close()
 
         print(f"Saved correlation matrix plot to {plot_path}")
