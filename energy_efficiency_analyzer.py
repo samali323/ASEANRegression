@@ -47,39 +47,37 @@ def debug_print_dataframe_info(df, label="DataFrame"):
     print("--- END DEBUG INFO ---\n")
 
 
-class TVerMarketInfo:
+class CarbonMarketInfo:
     """
-    Contains information about Thailand's Voluntary Emission Reduction (T-VER) market.
+    Contains information about carbon market pricing and mechanisms
     """
 
     def __init__(self):
-        # Base T-VER market values from Carbon Pulse article
+        # Carbon pricing by sector (USD per ton CO2)
         self.prices = {
-            'agriculture': 30.0,  # ~1,090 baht per tonne CO2 ($30 USD)
-            'solar': 3.5,  # ~40-250 baht range (avg ~$3.50 USD)
-            'average': 5.0,  # ~174 baht per tonne ($5 USD)
-            'industrial': 4.5,  # Estimated based on market data
-            'building': 4.8  # Estimated based on market data
+            'agriculture': 12.0,  # Agricultural projects
+            'solar': 8.0,         # Solar PV
+            'industrial': 7.5,    # Industrial energy efficiency
+            'building': 7.0,      # Building & infrastructure EE
+            'average': 8.5        # Average price
         }
 
         # Premium for aggregated projects
-        self.aggregation_premium = 0.2  # 20% premium for aggregated projects
+        self.aggregation_premium = 0.15  # 15% premium for aggregation
 
-        # Annual price growth based on recent market data
-        self.annual_price_growth = 0.08  # 8% annual growth based on 40% increase in one quarter
+        # Annual price growth projection
+        self.annual_price_growth = 0.06  # 6% annual growth
 
-        # TGO registration and verification costs (% of project value)
-        self.registration_cost_percent = 0.03  # 3% for registration and admin
-        self.verification_cost_percent = 0.02  # 2% for verification
-
-        # Recent market growth
-        self.recent_quarterly_growth = 0.40  # 40% growth in Q1 2024 from previous quarter
+        # Management and verification costs (% of project value)
+        self.management_fee_percent = 0.10  # 10% management fee
+        self.registration_cost_percent = 0.02  # 2% for registration
+        self.verification_cost_percent = 0.015  # 1.5% for verification
 
 
 class EnergyEfficiencyAnalyzer:
     """
     Analyzes energy efficiency potential, carbon savings, and economic benefits
-    based on ASEAN forecaster outputs.
+    based on forecaster outputs.
     """
 
     def __init__(self, base_forecaster, efficiency_scenarios=None):
@@ -96,40 +94,65 @@ class EnergyEfficiencyAnalyzer:
         self.forecaster = base_forecaster
         self.data = base_forecaster.data
 
-        # Default efficiency improvement scenarios if none provided
+        # === PROGRAM CONFIGURATION CONSTANTS ===
+
+        # Loan configuration
+        self.loan_amount = 4e8         # $400 million loan
+        self.loan_interest_rate = 0.02  # 2% annual interest
+        self.loan_grace_period = 5      # 5-year grace period
+
+        # Revenue allocation
+        self.energy_savings_allocation = 0.4  # 40% of energy savings to loan repayment
+        self.carbon_revenue_allocation = 0.8  # 80% of carbon revenue to loan repayment
+
+        # Energy cost factors
+        self.energy_cost_per_mwh = 120       # $120 per MWh (0.12/kWh)
+        self.energy_price_increase = 0.02    # 2% annual increase
+
+        # Environmental damage costs
+        self.carbon_damage_cost = 50         # $50 per ton CO2
+        self.carbon_damage_increase = 0.025  # 2.5% annual increase
+
+        # Carbon crediting factor
+        self.crediting_factor = 0.60         # 60% of reductions eligible for credits
+
+        # Implementation cost efficiency
+        self.implementation_cost_factor = 0.6  # 40% reduction from economies of scale
+
+        # Default efficiency improvement scenarios with realistic values
         self.efficiency_scenarios = efficiency_scenarios or {
             'low': {
-                'demand_reduction': 0.10,  # 10% reduction in energy demand
-                'co2_reduction': 0.15,  # 15% reduction in CO2 emissions
-                'implementation_cost': 0.02  # 2% of GDP
+                'demand_reduction': 0.12,  # 12% reduction (LED streetlighting, basic EE)
+                'co2_reduction': 0.18,     # 18% CO2 reduction
+                'implementation_cost': 0.008  # 0.8% of GDP
             },
             'medium': {
-                'demand_reduction': 0.20,  # 20% reduction in energy demand
-                'co2_reduction': 0.30,  # 30% reduction in CO2 emissions
-                'implementation_cost': 0.04  # 4% of GDP
+                'demand_reduction': 0.25,  # 25% reduction (comprehensive urban EE program)
+                'co2_reduction': 0.35,     # 35% CO2 reduction
+                'implementation_cost': 0.015  # 1.5% of GDP
             },
             'high': {
-                'demand_reduction': 0.35,  # 35% reduction in energy demand
-                'co2_reduction': 0.50,  # 50% reduction in CO2 emissions
-                'implementation_cost': 0.07  # 7% of GDP
+                'demand_reduction': 0.40,  # 40% reduction (ambitious program across all sectors)
+                'co2_reduction': 0.55,     # 55% CO2 reduction
+                'implementation_cost': 0.025  # 2.5% of GDP
             }
         }
 
-        # Climate change impact factors (conservative estimates)
+        # Climate change impact factors
         self.climate_factors = {
-            'cooling_demand_increase': 0.015,  # 1.5% increase per year in cooling demand
-            'temperature_increase': 0.02,  # 2% increase in average temperature per year
-            'extreme_weather_cost': 0.005  # 0.5% of GDP impact from extreme weather
+            'cooling_demand_increase': 0.006,  # 0.6% increase per year
+            'temperature_increase': 0.003,     # 0.3% increase per year
+            'extreme_weather_cost': 0.003      # 0.3% of GDP impact
         }
 
-        # Add T-VER market information for Thailand
-        self.tver_market = TVerMarketInfo()
+        # Add carbon market information
+        self.carbon_market = CarbonMarketInfo()
 
         # Generic carbon credit pricing (used for non-Thailand countries)
         self.carbon_credit_pricing = {
-            'current': 15,  # Current average price
-            'projected_2030': 40,  # Projected 2030 price
-            'projected_2035': 75  # Projected 2035 price
+            'current': 8,      # Current price
+            'projected_2030': 15,  # 2030 price
+            'projected_2035': 25   # 2035 price
         }
 
         # Create output directories
@@ -147,7 +170,77 @@ class EnergyEfficiencyAnalyzer:
             os.makedirs(os.path.join('output', country_str, 'efficiency_analysis'), exist_ok=True)
             os.makedirs(os.path.join('output', country_str, 'efficiency_analysis', 'plots'), exist_ok=True)
 
-    #-----------------------------------------------------------------------------------------------------------------------
+    def validate_forecast_data(self, forecasts, country):
+        """
+        Validate forecast data before running analysis
+
+        Parameters:
+        -----------
+        forecasts : DataFrame
+            The forecast data to validate
+        country : str
+            Country name for logging
+
+        Returns:
+        --------
+        bool
+            True if validation passes, False otherwise
+        """
+        print(f"\nValidating forecast data for {country}")
+        validation_passed = True
+
+        # Check for Prophet forecasts
+        prophet_columns = [col for col in forecasts.columns if '_Prophet' in col]
+        print(f"Found {len(prophet_columns)} Prophet forecast columns: {prophet_columns}")
+
+        if len(prophet_columns) == 0:
+            print("WARNING: No Prophet forecast columns found. Analysis may not be accurate.")
+            validation_passed = False
+
+        # Check forecast ranges
+        years = forecasts['Year'].unique()
+        print(f"Years in forecast: {min(years)} to {max(years)}")
+
+        future_years = [y for y in years if y >= 2024]
+        if len(future_years) == 0:
+            print("ERROR: No future years (2024+) found in forecast data.")
+            validation_passed = False
+
+        # Sample key indicators to verify reasonable values
+        key_indicators = {
+            'Demand (TWh)': {'realistic_min': 50, 'realistic_max': 1000},
+            'GDP (current US$)': {'realistic_min': 1e10, 'realistic_max': 1e13},
+            'CO2 emissions (metric tons per capita)': {'realistic_min': 0.1, 'realistic_max': 20},
+            'Population, total': {'realistic_min': 1e6, 'realistic_max': 1e9}
+        }
+
+        for indicator, ranges in key_indicators.items():
+            prophet_col = f"{indicator}_Prophet"
+            if prophet_col in forecasts.columns:
+                if forecasts[prophet_col].notna().any():
+                    min_val = forecasts[prophet_col][forecasts[prophet_col].notna()].min()
+                    max_val = forecasts[prophet_col][forecasts[prophet_col].notna()].max()
+                    print(f"{prophet_col}: range {min_val} to {max_val}")
+
+                    # Flag potentially problematic values
+                    if min_val < ranges['realistic_min'] or max_val > ranges['realistic_max']:
+                        print(f"WARNING: Values for {prophet_col} might be outside realistic range!")
+                        validation_passed = False
+                else:
+                    print(f"WARNING: {prophet_col} exists but contains only null values")
+                    validation_passed = False
+            else:
+                print(f"WARNING: Required indicator {prophet_col} not found")
+                validation_passed = False
+
+        # Return validation result
+        if validation_passed:
+            print("Validation PASSED: Forecast data appears to be suitable for analysis")
+        else:
+            print("Validation WARNING: Forecast data may have issues. Results should be carefully reviewed.")
+
+        return validation_passed
+
     def _generate_scenarios(self, country, forecasts):
         """
         Generate energy efficiency scenarios with detailed debugging
@@ -168,6 +261,9 @@ class EnergyEfficiencyAnalyzer:
 
         # Print debug info about the incoming data
         debug_print_dataframe_info(forecasts, f"Input data for {country}")
+
+        # Validate forecast data
+        self.validate_forecast_data(forecasts, country)
 
         # Get baseline data
         baseline = forecasts.copy()
@@ -190,8 +286,14 @@ class EnergyEfficiencyAnalyzer:
 
         # Helper function to find the best available column
         def find_best_column(base_indicator):
+            # Always prioritize Prophet forecasts when available
+            prophet_column = f"{base_indicator}_Prophet"
+            if prophet_column in future_data.columns and future_data[prophet_column].notna().any():
+                print(f"    Using Prophet forecast column '{prophet_column}' for {base_indicator}")
+                return prophet_column
+
+            # Only fall back to other columns if Prophet isn't available
             variants = [
-                f"{base_indicator}_Prophet",  # First try Prophet
                 base_indicator,  # Then try direct column
                 f"{base_indicator}_Source"  # Then try source indicator
             ]
@@ -296,10 +398,10 @@ class EnergyEfficiencyAnalyzer:
 
             # Apply modest CO2 increase due to climate change (less efficiency at higher temps)
             climate_affected_co2 = baseline_values['co2'].values * np.array(
-                [(1 + 0.005) ** (y - base_year) for y in years]
+                [(1 + 0.002) ** (y - base_year) for y in years]
             )
 
-            # Initialize results dictionary - UPDATED to remove "without climate change" baseline
+            # Initialize results dictionary
             results = {
                 'years': years,
                 'bau': {  # Business as usual with climate impacts
@@ -348,7 +450,7 @@ class EnergyEfficiencyAnalyzer:
 
     def _calculate_benefits(self, country, forecasts, results):
         """
-        Calculate economic and environmental benefits of efficiency scenarios with improved error handling
+        Calculate economic and environmental benefits of efficiency scenarios
         """
         print(f"  Calculating benefits of efficiency improvements for {country}")
 
@@ -363,14 +465,14 @@ class EnergyEfficiencyAnalyzer:
 
             # Energy cost assumptions (USD per MWh)
             energy_cost = {
-                'current': 100,
-                'projected': [100 * (1 + 0.02) ** (y - min(years)) for y in years]  # 2% annual increase
+                'current': self.energy_cost_per_mwh,
+                'projected': [self.energy_cost_per_mwh * (1 + self.energy_price_increase) ** (y - min(years)) for y in years]
             }
 
             # Environmental damage cost (USD per ton of CO2)
             env_damage_cost = {
-                'current': 40,
-                'projected': [40 * (1 + 0.03) ** (y - min(years)) for y in years]  # 3% annual increase
+                'current': self.carbon_damage_cost,
+                'projected': [self.carbon_damage_cost * (1 + self.carbon_damage_increase) ** (y - min(years)) for y in years]
             }
 
             # Calculate benefits for each scenario
@@ -387,25 +489,42 @@ class EnergyEfficiencyAnalyzer:
                                                for i in range(len(years))])
 
                 # Social benefits (job creation, health improvements)
-                job_creation = np.array([data['implementation_cost'][i] * 0.00001 for i in range(len(years))])
+                job_creation = np.array([data['implementation_cost'][i] * 0.00005 for i in range(len(years))])
                 health_benefits = env_damage_avoided * 0.3  # 30% of environmental benefits are health-related
 
+                # Additional program benefits
+                energy_security_benefit = energy_savings_twh * 10  # $10/MWh security premium
+
+                # Adjust implementation costs for economies of scale
+                adjusted_implementation_cost = data['implementation_cost'] * self.implementation_cost_factor
+
                 # Net economic benefit
-                net_benefit = energy_cost_savings + env_damage_avoided - data['implementation_cost']
+                net_benefit = (energy_cost_savings +
+                               env_damage_avoided +
+                               energy_security_benefit -
+                               adjusted_implementation_cost)
 
                 # Payback period calculation
-                cumulative_cost = np.cumsum(data['implementation_cost'])
-                cumulative_benefit = np.cumsum(energy_cost_savings + env_damage_avoided)
+                cumulative_cost = np.cumsum(adjusted_implementation_cost)
+                cumulative_benefit = np.cumsum(energy_cost_savings + env_damage_avoided + energy_security_benefit)
 
                 payback_period = None
                 for i in range(len(years)):
                     if cumulative_benefit[i] >= cumulative_cost[i]:
-                        payback_period = years[i] - min(years)
+                        if i == 0:
+                            # For first year, estimate partial year payback
+                            payback_period = cumulative_cost[i] / cumulative_benefit[i]
+                        else:
+                            # Interpolate between years
+                            fraction = (cumulative_cost[i-1] - cumulative_benefit[i-1]) / (
+                                    cumulative_benefit[i] - cumulative_benefit[i-1] - (
+                                    cumulative_cost[i] - cumulative_cost[i-1]))
+                            payback_period = (i - 1) + fraction
                         break
 
                 # ROI calculation (Return on Investment)
-                total_investment = np.sum(data['implementation_cost'])
-                total_benefit = np.sum(energy_cost_savings + env_damage_avoided)
+                total_investment = np.sum(adjusted_implementation_cost)
+                total_benefit = np.sum(energy_cost_savings + env_damage_avoided + energy_security_benefit)
 
                 # Check for division by zero
                 if total_investment > 0:
@@ -418,6 +537,8 @@ class EnergyEfficiencyAnalyzer:
                 print(f"\n  {scenario.capitalize()} scenario benefits:")
                 print(f"    Total energy savings: {np.sum(energy_savings_twh):.2f} TWh")
                 print(f"    Total energy cost savings: ${np.sum(energy_cost_savings) / 1e9:.2f} billion")
+                print(f"    Original implementation cost: ${np.sum(data['implementation_cost']) / 1e9:.2f} billion")
+                print(f"    Adjusted implementation cost: ${np.sum(adjusted_implementation_cost) / 1e9:.2f} billion")
                 print(f"    Total CO2 reduction: {np.sum(total_co2_reduction) / 1e6:.2f} million tons")
                 print(f"    ROI: {roi * 100:.1f}%")
                 print(
@@ -427,7 +548,9 @@ class EnergyEfficiencyAnalyzer:
                 benefits['economic'][scenario] = {
                     'energy_savings_twh': energy_savings_twh,
                     'energy_cost_savings': energy_cost_savings,
-                    'implementation_cost': data['implementation_cost'],
+                    'implementation_cost': adjusted_implementation_cost,  # Using adjusted cost
+                    'original_implementation_cost': data['implementation_cost'],  # Keep original for reference
+                    'energy_security_benefit': energy_security_benefit,
                     'net_benefit': net_benefit,
                     'payback_period': payback_period,
                     'roi': roi
@@ -468,21 +591,7 @@ class EnergyEfficiencyAnalyzer:
 
     def _calculate_carbon_credits(self, country, forecasts, results):
         """
-        Calculate potential carbon credits from efficiency improvements with Thailand T-VER market integration
-
-        Parameters:
-        -----------
-        country : str
-            Country name
-        forecasts : DataFrame
-            Combined forecast data
-        results : dict
-            Scenario results
-
-        Returns:
-        --------
-        dict
-            Carbon credit calculations
+        Calculate potential carbon credits from efficiency improvements
         """
         print(f"  Calculating potential carbon credits for {country}")
 
@@ -493,28 +602,28 @@ class EnergyEfficiencyAnalyzer:
         is_thailand = country.lower() == 'thailand'
 
         if is_thailand:
-            print("  Using Thailand T-VER market data for carbon credit calculations")
+            print("  Using carbon market data for calculations")
             # Create sector-specific carbon credit projections
             sectors = {
                 'agriculture': {
-                    'share': 0.20,  # 20% of credits from agriculture/forestry sector
-                    'price': self.tver_market.prices['agriculture'],
-                    'growth_rate': self.tver_market.annual_price_growth
+                    'share': 0.20,  # 20% from agricultural sustainability projects
+                    'price': self.carbon_market.prices['agriculture'],
+                    'growth_rate': self.carbon_market.annual_price_growth
                 },
                 'solar': {
-                    'share': 0.30,  # 30% of credits from solar/renewable sector
-                    'price': self.tver_market.prices['solar'],
-                    'growth_rate': self.tver_market.annual_price_growth * 0.8  # Lower growth for renewables
+                    'share': 0.35,  # 35% from solar PV
+                    'price': self.carbon_market.prices['solar'],
+                    'growth_rate': self.carbon_market.annual_price_growth * 1.1
                 },
                 'industrial': {
-                    'share': 0.35,  # 35% of credits from industrial efficiency
-                    'price': self.tver_market.prices['industrial'],
-                    'growth_rate': self.tver_market.annual_price_growth * 1.1  # Higher growth for industry
+                    'share': 0.25,  # 25% from industrial EE
+                    'price': self.carbon_market.prices['industrial'],
+                    'growth_rate': self.carbon_market.annual_price_growth
                 },
                 'building': {
-                    'share': 0.15,  # 15% of credits from buildings sector
-                    'price': self.tver_market.prices['building'],
-                    'growth_rate': self.tver_market.annual_price_growth * 0.9
+                    'share': 0.20,  # 20% from LED streetlighting and building EE
+                    'price': self.carbon_market.prices['building'],
+                    'growth_rate': self.carbon_market.annual_price_growth
                 }
             }
 
@@ -536,7 +645,7 @@ class EnergyEfficiencyAnalyzer:
                 carbon_prices.append(weighted_price)
                 sector_prices.append(year_prices)
 
-            print(f"  T-VER price trajectory: ${carbon_prices[0]:.2f} (2024) to ${carbon_prices[-1]:.2f} (2035)")
+            print(f"  Carbon price trajectory: ${carbon_prices[0]:.2f} (2024) to ${carbon_prices[-1]:.2f} (2035)")
         else:
             # Use the standard carbon price trajectory for non-Thailand countries
             start_price = self.carbon_credit_pricing['current']
@@ -553,24 +662,34 @@ class EnergyEfficiencyAnalyzer:
                     # Linear increase from 2030 to 2035 price
                     progress = (year - 2030) / (2035 - 2030)
                     price = self.carbon_credit_pricing['projected_2030'] + progress * (
-                                end_price - self.carbon_credit_pricing['projected_2030'])
+                            end_price - self.carbon_credit_pricing['projected_2030'])
                 carbon_prices.append(price)
+
+        # Apply crediting factor - not all emissions reductions generate carbon credits
+        crediting_factor = self.crediting_factor  # From program configuration
 
         # Calculate credits for each scenario
         for scenario, data in results['scenarios'].items():
             co2_reduction = results['bau']['co2'] - data['co2']
             total_co2_reduction = co2_reduction * results['bau']['population']
 
+            # Apply crediting factor
+            creditable_co2 = total_co2_reduction * crediting_factor
+
             # Calculate carbon credit value
-            carbon_credit_value = np.array([total_co2_reduction[i] * carbon_prices[i]
+            carbon_credit_value = np.array([creditable_co2[i] * carbon_prices[i]
                                             for i in range(len(years))])
 
+            # Calculate management fees
+            management_fee = carbon_credit_value * self.carbon_market.management_fee_percent
+            net_credit_value = carbon_credit_value - management_fee
+
             # Calculate cumulative credit generation
-            cumulative_credits = np.cumsum(total_co2_reduction)
+            cumulative_credits = np.cumsum(creditable_co2)
             cumulative_value = np.cumsum(carbon_credit_value)
 
             # Calculate aggregation potential (combining small projects into larger portfolios)
-            aggregation_premium = self.tver_market.aggregation_premium if is_thailand else 0.2
+            aggregation_premium = self.carbon_market.aggregation_premium
             aggregation_potential = carbon_credit_value * (1 + aggregation_premium)
 
             # Calculate sector breakdown for Thailand
@@ -581,7 +700,7 @@ class EnergyEfficiencyAnalyzer:
                     year_breakdown = {}
                     for sector, info in sectors.items():
                         # Calculate credits by sector
-                        sector_credits = total_co2_reduction[i] * info['share']
+                        sector_credits = creditable_co2[i] * info['share']
                         sector_value = sector_credits * sector_prices[i][sector]
                         year_breakdown[sector] = {
                             'credits': sector_credits,
@@ -590,39 +709,181 @@ class EnergyEfficiencyAnalyzer:
                         }
                     sector_breakdown.append(year_breakdown)
 
-            # Calculate TGO registration and verification costs for Thailand
-            tgo_costs = None
-            if is_thailand:
-                registration_cost = carbon_credit_value * self.tver_market.registration_cost_percent
-                verification_cost = carbon_credit_value * self.tver_market.verification_cost_percent
-                total_tgo_cost = registration_cost + verification_cost
-                tgo_costs = {
-                    'registration': registration_cost,
-                    'verification': verification_cost,
-                    'total': total_tgo_cost
-                }
+            # Calculate registration and verification costs
+            registration_cost = carbon_credit_value * self.carbon_market.registration_cost_percent
+            verification_cost = carbon_credit_value * self.carbon_market.verification_cost_percent
+            total_cost = registration_cost + verification_cost
 
             carbon_credits[scenario] = {
-                'annual_credits': total_co2_reduction,
+                'annual_credits': creditable_co2,  # Using creditable CO2 instead of total
+                'total_co2_reduction': total_co2_reduction,  # Keep total for reference
                 'annual_value': carbon_credit_value,
+                'management_fee': management_fee,
+                'net_value': net_credit_value,
                 'cumulative_credits': cumulative_credits,
                 'cumulative_value': cumulative_value,
                 'aggregation_potential': aggregation_potential,
-                'carbon_prices': carbon_prices
+                'carbon_prices': carbon_prices,
+                'crediting_factor': crediting_factor,
+                'registration_cost': registration_cost,
+                'verification_cost': verification_cost,
+                'total_cost': total_cost
             }
 
-            # Add Thailand-specific information
+            # Add sector-specific information
             if is_thailand:
                 carbon_credits[scenario].update({
-                    'sector_breakdown': sector_breakdown,
-                    'tgo_costs': tgo_costs,
-                    'is_tver': True
+                    'sector_breakdown': sector_breakdown
                 })
 
         return carbon_credits
 
+    def _calculate_loan_repayment(self, country, results, benefits, carbon_credits):
+        """
+        Calculate loan repayment schedule for financing program
 
-#---------------------------------------------------------------------------------------------------------------------------------
+        Parameters:
+        -----------
+        country : str
+            Country name
+        results : dict
+            Scenario results
+        benefits : dict
+            Benefits calculations
+        carbon_credits : dict
+            Carbon credit calculations
+
+        Returns:
+        --------
+        dict
+            Loan repayment analysis
+        """
+        if country.lower() != 'thailand':
+            return None
+
+        print(f"  Calculating loan repayment for {country}")
+
+        # Program loan amount
+        loan_amount = self.loan_amount  # From program configuration
+
+        years = results['years']
+        repayment_analysis = {}
+
+        # Loan terms
+        annual_interest_rate = self.loan_interest_rate
+        grace_period_years = self.loan_grace_period
+
+        # Revenue allocation to loan repayment
+        energy_savings_allocation = self.energy_savings_allocation
+        carbon_allocation = self.carbon_revenue_allocation
+
+        # Calculate for each scenario
+        for scenario in benefits['economic']:
+            # Get energy cost savings and carbon revenue
+            energy_savings = benefits['economic'][scenario]['energy_cost_savings']
+            carbon_revenue = carbon_credits[scenario]['net_value']  # After management fee
+
+            # Calculate payment streams
+            energy_payment = energy_savings * energy_savings_allocation
+            carbon_payment = carbon_revenue * carbon_allocation
+
+            # Calculate total annual payment
+            total_payment = energy_payment + carbon_payment
+
+            # Calculate remaining balance with interest
+            remaining_balance = np.zeros(len(years))
+
+            # Apply grace period (interest accrues but no principal payments)
+            remaining_balance[0] = loan_amount
+
+            for i in range(1, min(grace_period_years, len(years))):
+                interest = remaining_balance[i-1] * annual_interest_rate
+                remaining_balance[i] = remaining_balance[i-1] + interest
+
+            # Calculate repayment after grace period
+            for i in range(grace_period_years, len(years)):
+                if i >= len(years):
+                    break
+
+                interest = remaining_balance[i-1] * annual_interest_rate
+                payment = total_payment[i]
+                remaining_balance[i] = remaining_balance[i-1] + interest - payment
+                if remaining_balance[i] < 0:
+                    remaining_balance[i] = 0
+
+            # Find payback period
+            payback_period = None
+            payback_year = None
+
+            for i, year in enumerate(years):
+                if i >= grace_period_years and remaining_balance[i] <= 0:
+                    if i > grace_period_years and remaining_balance[i-1] > 0:
+                        # Interpolate for more precise estimate
+                        prev_balance = remaining_balance[i-1]
+                        # Calculate balance reduction in this period
+                        interest = prev_balance * annual_interest_rate
+                        balance_reduction = prev_balance + interest - total_payment[i]
+                        if balance_reduction < 0:
+                            # Calculate what fraction of the year is needed
+                            fraction = prev_balance / (total_payment[i] - interest)
+                            payback_period = i - grace_period_years + fraction
+                            payback_year = years[i-1] + fraction
+                        else:
+                            payback_period = i - grace_period_years
+                            payback_year = years[i]
+                    else:
+                        payback_period = i - grace_period_years
+                        payback_year = years[i]
+                    break
+
+            # If no payback within the period, estimate remaining years
+            if payback_period is None and remaining_balance[-1] > 0:
+                # Estimate years beyond our timeframe
+                annual_payment_avg = np.mean(total_payment[-3:])  # Average of last 3 years
+                remaining_with_interest = remaining_balance[-1] * (1 + annual_interest_rate)
+                if annual_payment_avg > remaining_balance[-1] * annual_interest_rate:
+                    years_beyond = remaining_balance[-1] / (annual_payment_avg - (remaining_balance[-1] * annual_interest_rate))
+                    payback_period = len(years) - grace_period_years + years_beyond
+                    payback_year = years[-1] + years_beyond
+                else:
+                    payback_period = None
+                    payback_year = None
+
+            # Store results
+            repayment_analysis[scenario] = {
+                'years': years,
+                'energy_payment': energy_payment,
+                'carbon_payment': carbon_payment,
+                'total_payment': total_payment,
+                'remaining_balance': remaining_balance,
+                'payback_period': payback_period,
+                'payback_year': payback_year,
+                'loan_amount': loan_amount,
+                'interest_rate': annual_interest_rate,
+                'grace_period': grace_period_years,
+                'allocation': {
+                    'energy_savings': energy_savings_allocation,
+                    'carbon_credits': carbon_allocation
+                }
+            }
+
+            # Print summary
+            if payback_period is not None:
+                energy_total = np.sum(energy_payment) / 1e6
+                carbon_total = np.sum(carbon_payment) / 1e6
+                total = energy_total + carbon_total
+                energy_pct = (energy_total / total) * 100 if total > 0 else 0
+                carbon_pct = (carbon_total / total) * 100 if total > 0 else 0
+
+                print(f"    {scenario.capitalize()} scenario:")
+                print(f"    Payback period: {payback_period:.2f} years (by {payback_year:.2f})")
+                print(f"    Energy payments: ${energy_total:.2f} million ({energy_pct:.1f}%)")
+                print(f"    Carbon payments: ${carbon_total:.2f} million ({carbon_pct:.1f}%)")
+            else:
+                print(f"    {scenario.capitalize()} scenario does not reach payback within timeframe")
+
+        return repayment_analysis
+
     def _create_visualizations(self, country, forecasts, results, benefits, carbon_credits):
         """
         Create visualizations for energy efficiency analysis
@@ -650,7 +911,7 @@ class EnergyEfficiencyAnalyzer:
 
         years = results['years']
 
-        # 1. Energy Demand Scenarios - UPDATED to remove "without climate change" baseline
+        # 1. Energy Demand Scenarios
         plt.figure(figsize=(12, 8))
         plt.plot(years, results['bau']['demand'], 'r-', linewidth=3, label='Business As Usual')
 
@@ -668,7 +929,7 @@ class EnergyEfficiencyAnalyzer:
         plt.savefig(os.path.join(output_dir, 'energy_demand_scenarios.png'), dpi=300)
         plt.close()
 
-        # 2. CO2 Emissions Scenarios - UPDATED to remove "without climate change" baseline
+        # 2. CO2 Emissions Scenarios
         plt.figure(figsize=(12, 8))
         plt.plot(years, results['bau']['co2'], 'r-', linewidth=3, label='Business As Usual')
 
@@ -711,7 +972,7 @@ class EnergyEfficiencyAnalyzer:
 
         title = f"{country} - Economic Benefits of Energy Efficiency"
         if is_thailand:
-            title += " (Including T-VER Revenue)"
+            title += " (Including Carbon Revenue)"
 
         plt.title(title, fontsize=15)
         plt.xlabel("Year", fontsize=12)
@@ -737,7 +998,7 @@ class EnergyEfficiencyAnalyzer:
 
         title = f"{country} - Annual Carbon Credit Value"
         if is_thailand:
-            title += " (T-VER Market)"
+            title += " (Projected)"
 
         plt.title(title, fontsize=15)
         plt.xlabel("Year", fontsize=12)
@@ -818,10 +1079,9 @@ class EnergyEfficiencyAnalyzer:
         plt.savefig(os.path.join(output_dir, 'ndc_contribution.png'), dpi=300)
         plt.close()
 
-
     def _create_thailand_specific_visualizations(self, country, results, benefits, carbon_credits):
         """
-        Create Thailand-specific visualizations for T-VER market analysis
+        Create Thailand-specific visualizations for carbon market analysis
 
         Parameters:
         -----------
@@ -837,19 +1097,19 @@ class EnergyEfficiencyAnalyzer:
         if country.lower() != 'thailand':
             return
 
-        print(f"  Creating Thailand T-VER market visualizations")
+        print(f"  Creating additional market visualizations")
 
         output_dir = os.path.join('output', country, 'efficiency_analysis', 'plots')
         os.makedirs(output_dir, exist_ok=True)
 
         years = results['years']
 
-        # 1. T-VER Sector Value Comparison
+        # 1. Sector Value Comparison
         plt.figure(figsize=(12, 8))
 
         # Use medium scenario as an example
         scenario = 'medium'
-        if scenario in carbon_credits:
+        if scenario in carbon_credits and 'sector_breakdown' in carbon_credits[scenario]:
             sector_data = carbon_credits[scenario]['sector_breakdown']
 
             # Extract data for each sector across years
@@ -868,16 +1128,16 @@ class EnergyEfficiencyAnalyzer:
                 plt.bar(years, sector_values[sector], bottom=bottom, label=f"{sector.capitalize()}", color=colors[i])
                 bottom += np.array(sector_values[sector])
 
-            plt.title(f"Thailand - T-VER Credit Value by Sector ({scenario.capitalize()} Scenario)", fontsize=15)
+            plt.title(f"Carbon Credit Value by Sector ({scenario.capitalize()} Scenario)", fontsize=15)
             plt.xlabel("Year", fontsize=12)
             plt.ylabel("Carbon Credit Value (Million USD)", fontsize=12)
             plt.grid(True, alpha=0.3)
             plt.legend(loc='best', fontsize=12)
             plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'tver_sector_value.png'), dpi=300)
+            plt.savefig(os.path.join(output_dir, 'sector_value.png'), dpi=300)
             plt.close()
 
-        # 2. T-VER Price Trajectory
+        # 2. Price Trajectory
         plt.figure(figsize=(12, 6))
 
         # Get price data for different sectors from the first scenario
@@ -905,137 +1165,57 @@ class EnergyEfficiencyAnalyzer:
                 plt.plot(years, price_data[sector], label=f"{sector.capitalize()}",
                          color=colors[i], linestyle=linestyles[i], linewidth=2)
 
-            plt.title(f"Thailand - T-VER Price Projections by Sector", fontsize=15)
+            plt.title(f"Carbon Price Projections by Sector", fontsize=15)
             plt.xlabel("Year", fontsize=12)
             plt.ylabel("Carbon Price (USD/tonne CO2)", fontsize=12)
             plt.grid(True, alpha=0.3)
             plt.legend(loc='best', fontsize=12)
             plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'tver_price_projections.png'), dpi=300)
+            plt.savefig(os.path.join(output_dir, 'price_projections.png'), dpi=300)
             plt.close()
 
-        # 3. Cost comparison - TGO costs vs revenue
+        # 3. Cost comparison - costs vs revenue
         plt.figure(figsize=(12, 6))
 
-        if scenario in carbon_credits and 'tgo_costs' in carbon_credits[scenario]:
-            tgo_costs = carbon_credits[scenario]['tgo_costs']
-
-            # Convert to millions
-            registration_costs = tgo_costs['registration'] / 1e6
-            verification_costs = tgo_costs['verification'] / 1e6
+        if scenario in carbon_credits:
+            registration_costs = carbon_credits[scenario]['registration_cost'] / 1e6
+            verification_costs = carbon_credits[scenario]['verification_cost'] / 1e6
+            management_fees = carbon_credits[scenario]['management_fee'] / 1e6
             credit_revenue = carbon_credits[scenario]['annual_value'] / 1e6
+            net_revenue = carbon_credits[scenario]['net_value'] / 1e6
 
             # Create stacked bar for costs and a line for revenue
-            plt.bar(years, registration_costs, label="TGO Registration Costs", color='#CD5C5C', alpha=0.7)
-            plt.bar(years, verification_costs, bottom=registration_costs, label="TGO Verification Costs", color='#F08080',
+            plt.bar(years, registration_costs, label="Registration Costs", color='#CD5C5C', alpha=0.7)
+            plt.bar(years, verification_costs, bottom=registration_costs, label="Verification Costs", color='#F08080',
                     alpha=0.7)
-            plt.plot(years, credit_revenue, 'k-', linewidth=2, label="Credit Revenue")
+            plt.bar(years, management_fees, bottom=registration_costs+verification_costs,
+                    label="Management Fees", color='#FA8072', alpha=0.7)
+            plt.plot(years, credit_revenue, 'k-', linewidth=2, label="Gross Revenue")
+            plt.plot(years, net_revenue, 'g--', linewidth=2, label="Net Revenue")
 
-            plt.title(f"Thailand - T-VER Costs vs Revenue ({scenario.capitalize()} Scenario)", fontsize=15)
+            plt.title(f"Carbon Credit Costs vs Revenue ({scenario.capitalize()} Scenario)", fontsize=15)
             plt.xlabel("Year", fontsize=12)
             plt.ylabel("Million USD", fontsize=12)
             plt.grid(True, alpha=0.3)
             plt.legend(loc='best', fontsize=12)
             plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'tver_costs_vs_revenue.png'), dpi=300)
+            plt.savefig(os.path.join(output_dir, 'costs_vs_revenue.png'), dpi=300)
             plt.close()
 
+        # 4. Loan Repayment Visualization
+        plt.figure(figsize=(12, 6))
 
-    def _calculate_tver_loan_repayment(self, country, results, benefits, carbon_credits, loan_amount, world_bank_share=0.4):
-        """
-        Calculate loan repayment schedule incorporating T-VER revenue
+        # Assuming loan repayment data is passed to this function
+        # For now, let's just create a placeholder plot to be updated later
 
-        Parameters:
-        -----------
-        country : str
-            Country name
-        results : dict
-            Scenario results
-        benefits : dict
-            Benefits calculations
-        carbon_credits : dict
-            Carbon credit calculations
-        loan_amount : float
-            Initial loan amount in USD
-        world_bank_share : float
-            Share of savings allocated to loan repayment (default: 0.4)
-
-        Returns:
-        --------
-        dict
-            Loan repayment analysis
-        """
-        if country.lower() != 'thailand':
-            return None
-
-        print(f"  Calculating T-VER enhanced loan repayment for Thailand")
-
-        years = results['years']
-        repayment_analysis = {}
-
-        # Calculate for each scenario
-        for scenario in benefits['economic']:
-            # Get energy cost savings
-            energy_savings = benefits['economic'][scenario]['energy_cost_savings']
-
-            # Get carbon credit revenue
-            carbon_revenue = carbon_credits[scenario]['annual_value']
-
-            # Calculate payment streams
-            energy_payment = energy_savings * world_bank_share
-            carbon_payment = carbon_revenue * 0.8  # Assume 80% of carbon credits go to loan repayment
-
-            # Calculate total annual payment
-            total_payment = energy_payment + carbon_payment
-
-            # Calculate remaining balance
-            remaining_balance = np.zeros(len(years))
-            remaining_balance[0] = loan_amount - total_payment[0]
-            for i in range(1, len(years)):
-                if remaining_balance[i - 1] > 0:
-                    remaining_balance[i] = remaining_balance[i - 1] - total_payment[i]
-                else:
-                    remaining_balance[i] = 0
-
-            # Find payback period
-            payback_period = None
-            payback_year = None
-            for i, year in enumerate(years):
-                if remaining_balance[i] <= 0:
-                    if i > 0:
-                        # Interpolate for more precise estimate
-                        prev_balance = remaining_balance[i - 1]
-                        current_payment = total_payment[i]
-                        fraction = prev_balance / current_payment
-                        payback_period = (i - 1) + fraction
-                        payback_year = years[i - 1] + fraction
-                    else:
-                        payback_period = 0
-                        payback_year = years[0]
-                    break
-
-            # Store results
-            repayment_analysis[scenario] = {
-                'years': years,
-                'energy_payment': energy_payment,
-                'carbon_payment': carbon_payment,
-                'total_payment': total_payment,
-                'remaining_balance': remaining_balance,
-                'payback_period': payback_period,
-                'payback_year': payback_year
-            }
-
-            # Print summary
-            if payback_period is not None:
-                print(
-                    f"    {scenario.capitalize()} scenario payback period: {payback_period:.2f} years (by {payback_year:.2f})")
-                print(f"    Energy payments: ${np.sum(energy_payment) / 1e9:.2f} billion")
-                print(f"    Carbon payments: ${np.sum(carbon_payment) / 1e9:.2f} billion")
-            else:
-                print(f"    {scenario.capitalize()} scenario does not reach payback within timeframe")
-
-        return repayment_analysis
-
+        plt.title("Loan Repayment Projections", fontsize=15)
+        plt.xlabel("Year", fontsize=12)
+        plt.ylabel("Million USD", fontsize=12)
+        plt.grid(True, alpha=0.3)
+        plt.legend(loc='best', fontsize=12)
+        plt.tight_layout()
+        plt.savefig(os.path.join(output_dir, 'loan_repayment.png'), dpi=300)
+        plt.close()
 
     def _generate_report(self, country, forecasts, results, benefits, carbon_credits):
         """
@@ -1127,13 +1307,13 @@ class EnergyEfficiencyAnalyzer:
             # Thailand-specific carbon pricing info
             if country.lower() == 'thailand':
                 f.write(
-                    "Thailand's Voluntary Emission Reduction (T-VER) program offers excellent opportunities for carbon credit generation:\n\n")
-                f.write("- **Current T-VER Prices by Sector:**\n")
-                f.write(f"  - Agriculture/Forestry: ${self.tver_market.prices['agriculture']} per ton CO2\n")
-                f.write(f"  - Solar Energy: ${self.tver_market.prices['solar']} per ton CO2\n")
-                f.write(f"  - Industrial: ${self.tver_market.prices['industrial']} per ton CO2\n")
-                f.write(f"  - Building: ${self.tver_market.prices['building']} per ton CO2\n")
-                f.write(f"  - Market Average: ${self.tver_market.prices['average']} per ton CO2\n\n")
+                    "The carbon market offers excellent opportunities for carbon credit generation:\n\n")
+                f.write("- **Current Carbon Prices by Sector:**\n")
+                f.write(f"  - Agriculture/Forestry: ${self.carbon_market.prices['agriculture']} per ton CO2\n")
+                f.write(f"  - Solar Energy: ${self.carbon_market.prices['solar']} per ton CO2\n")
+                f.write(f"  - Industrial: ${self.carbon_market.prices['industrial']} per ton CO2\n")
+                f.write(f"  - Building: ${self.carbon_market.prices['building']} per ton CO2\n")
+                f.write(f"  - Market Average: ${self.carbon_market.prices['average']} per ton CO2\n\n")
             else:
                 f.write("Energy efficiency projects provide excellent opportunities for carbon credit generation:\n\n")
                 f.write("- **Pricing Trajectory:**\n")
@@ -1183,10 +1363,9 @@ class EnergyEfficiencyAnalyzer:
 
         print(f"  Report saved to {report_file}")
 
-
-    def _generate_tver_integration_report(self, country, forecasts, results, benefits, carbon_credits, loan_repayment=None):
+    def _generate_program_report(self, country, forecasts, results, benefits, carbon_credits, loan_repayment):
         """
-        Generate a T-VER integration report for Thailand
+        Generate a comprehensive report for the financing program
 
         Parameters:
         -----------
@@ -1200,67 +1379,66 @@ class EnergyEfficiencyAnalyzer:
             Benefits calculations
         carbon_credits : dict
             Carbon credit calculations
-        loan_repayment : dict, optional
+        loan_repayment : dict
             Loan repayment analysis
         """
-        if country.lower() != 'thailand':
-            return
-
-        print(f"  Generating T-VER integration report for Thailand")
+        print(f"  Generating program report for {country}")
 
         output_dir = os.path.join('output', country, 'efficiency_analysis')
-        report_file = os.path.join(output_dir, 'tver_integration_report.md')
+        report_file = os.path.join(output_dir, 'financing_program_report.md')
 
         with open(report_file, 'w') as f:
-            f.write(f"# Thailand Voluntary Emission Reduction (T-VER) Integration Report\n\n")
+            f.write(f"# Low-Carbon City Financing Program - {country}\n\n")
             f.write(f"*Generated on {datetime.now().strftime('%Y-%m-%d')}*\n\n")
 
             f.write("## Executive Summary\n\n")
-            f.write(
-                "This report analyzes the integration of Thailand's Voluntary Emission Reduction Programme (T-VER) with energy efficiency initiatives, highlighting the potential carbon credit revenue streams, project types, and economic benefits.\n\n")
 
-            # Summary of key findings
-            scenario = 'medium'  # Use medium scenario for summary
+            # Use medium scenario as default for summary
+            scenario = 'medium'
+
             if scenario in carbon_credits and scenario in benefits['economic']:
+                roi = benefits['economic'][scenario]['roi'] * 100
+                payback = loan_repayment[scenario]['payback_period'] if loan_repayment and scenario in loan_repayment else None
+
                 total_co2 = np.sum(carbon_credits[scenario]['annual_credits']) / 1e6
                 carbon_value = np.sum(carbon_credits[scenario]['annual_value']) / 1e6
+                management_fee = carbon_value * self.carbon_market.management_fee_percent  # 10% management fee
+                net_carbon_value = carbon_value - management_fee
+
                 energy_savings = np.sum(benefits['economic'][scenario]['energy_savings_twh'])
+                energy_savings_value = np.sum(benefits['economic'][scenario]['energy_cost_savings']) / 1e9
 
-                f.write("### Key Findings\n\n")
-                f.write(f"- **Total CO2 Reduction Potential:** {total_co2:.2f} million tons over 12 years\n")
-                f.write(f"- **Carbon Credit Value:** ${carbon_value:.2f} million using T-VER mechanism\n")
-                f.write(f"- **Energy Savings:** {energy_savings:.2f} TWh\n")
+                f.write(f"The proposed low-carbon city financing program for {country} demonstrates significant potential for both emissions reductions and economic benefits:\n\n")
 
-                if loan_repayment and scenario in loan_repayment:
-                    repayment = loan_repayment[scenario]
-                    if repayment['payback_period'] is not None:
-                        f.write(
-                            f"- **Loan Repayment Period:** {repayment['payback_period']:.2f} years with T-VER revenue\n")
-                        energy_contribution = np.sum(repayment['energy_payment']) / (
-                                    np.sum(repayment['energy_payment']) + np.sum(repayment['carbon_payment'])) * 100
-                        carbon_contribution = np.sum(repayment['carbon_payment']) / (
-                                    np.sum(repayment['energy_payment']) + np.sum(repayment['carbon_payment'])) * 100
-                        f.write(
-                            f"- **Repayment Sources:** {energy_contribution:.1f}% from energy savings, {carbon_contribution:.1f}% from carbon credits\n")
+                f.write(f"- **Program Loan Amount:** ${self.loan_amount/1e6:.1f} million\n")
+                f.write(f"- **Total CO₂ Reduction:** {total_co2:.2f} million tons\n")
+                f.write(f"- **Carbon Credit Value:** ${carbon_value:.2f} million\n")
+                f.write(f"- **Management Fee:** ${management_fee:.2f} million\n")
+                f.write(f"- **Net Carbon Revenue:** ${net_carbon_value:.2f} million\n")
+                f.write(f"- **Energy Savings:** {energy_savings:.2f} TWh (${energy_savings_value:.2f} billion)\n")
+                f.write(f"- **Return on Investment:** {roi:.1f}%\n")
 
-                f.write("\n")
+                if payback:
+                    f.write(f"- **Loan Repayment Period:** {payback:.1f} years\n\n")
+                else:
+                    f.write(f"- **Loan Repayment:** Beyond program timeframe\n\n")
 
-            # T-VER Market Overview
-            f.write("## T-VER Market Overview\n\n")
-            f.write(
-                "The Thailand Voluntary Emission Reduction Programme (T-VER) is managed by the Thailand Greenhouse Gas Management Organization (TGO). The market has shown significant growth, with a 40% price increase in Q1 2024 compared to the previous quarter.\n\n")
+            # Project Structure & Components
+            f.write("## Program Structure & Components\n\n")
 
-            f.write("### Current Carbon Prices by Sector\n\n")
-            f.write("| Sector | Price (USD/tCO2) | Price (Thai Baht/tCO2) |\n")
-            f.write("|--------|------------------|------------------------|\n")
-            f.write(f"| Agriculture/Forestry | ${self.tver_market.prices['agriculture']:.2f} | ~1,090 |\n")
-            f.write(f"| Solar Energy | ${self.tver_market.prices['solar']:.2f} | 40-250 |\n")
-            f.write(f"| Industrial | ${self.tver_market.prices['industrial']:.2f} | ~160 |\n")
-            f.write(f"| Building | ${self.tver_market.prices['building']:.2f} | ~170 |\n")
-            f.write(f"| Market Average | ${self.tver_market.prices['average']:.2f} | ~174 |\n\n")
+            f.write("### Financing Modality\n\n")
+            f.write(f"- ${self.loan_amount/1e6:.1f} million loan for implementation of energy efficiency and renewable energy projects\n")
+            f.write("- Focus on large-scale public infrastructure and community-level initiatives\n")
+            f.write("- Disbursement linked to verified emissions reductions and project milestones\n\n")
 
-            # Sector Analysis
-            f.write("## Sector Analysis\n\n")
+            f.write("### Implementation Structure\n\n")
+            f.write("- **Public Sector Organizations:** Implementing large-scale infrastructure projects\n")
+            f.write("- **Local Financial Institutions:** Financing community-level projects\n")
+            f.write("- **Coordinating Entity:** Aggregating and monetizing carbon credits\n")
+            f.write("- **Program Management:** Oversight, MRV, and compliance\n\n")
+
+            # Carbon Market Integration
+            f.write("## Carbon Market Integration\n\n")
 
             if scenario in carbon_credits and 'sector_breakdown' in carbon_credits[scenario]:
                 sector_data = carbon_credits[scenario]['sector_breakdown']
@@ -1281,51 +1459,19 @@ class EnergyEfficiencyAnalyzer:
 
                 f.write("\n")
 
-            # Implementation Strategy
-            f.write("## T-VER Implementation Strategy\n\n")
-
-            f.write("### Project Development Process\n\n")
-            f.write("1. **Project Design:** Develop energy efficiency measures aligned with T-VER methodologies\n")
-            f.write("2. **Registration with TGO:** Register projects under the T-VER programme\n")
-            f.write("3. **Implementation:** Execute energy efficiency measures with proper monitoring\n")
-            f.write("4. **Verification:** Verify emission reductions through TGO-approved verifiers\n")
-            f.write("5. **Credit Issuance:** Receive T-VER credits based on verified reductions\n")
-            f.write("6. **Credit Utilization:** Use credits for loan repayment or contribute to NDC targets\n\n")
-
-            f.write("### Priority Sectors\n\n")
-            f.write(
-                "Based on current T-VER prices and energy efficiency potential, the following sectors should be prioritized:\n\n")
-            f.write("1. **Agricultural Sector:** Highest carbon credit prices (~$30/tCO2)\n")
-            f.write("   - Irrigation pump efficiency improvements\n")
-            f.write("   - Agricultural processing equipment upgrades\n")
-            f.write("   - Biomass energy projects\n\n")
-
-            f.write("2. **Industrial Sector:** Large emission reduction potential\n")
-            f.write("   - Motor and drive system efficiency\n")
-            f.write("   - Process heat recovery\n")
-            f.write("   - Industrial HVAC optimization\n\n")
-
-            f.write("3. **Building Sector:** Good urban implementation potential\n")
-            f.write("   - Commercial building energy management systems\n")
-            f.write("   - Lighting retrofits\n")
-            f.write("   - Building envelope improvements\n\n")
-
-            f.write("4. **Solar Energy:** Complements efficiency measures\n")
-            f.write("   - Rooftop solar installations\n")
-            f.write("   - Solar water heating\n")
-            f.write("   - Industrial solar thermal applications\n\n")
-
             # Loan Repayment Analysis
             if loan_repayment:
                 f.write("## Loan Repayment Analysis\n\n")
 
-                f.write(
-                    "The integration of T-VER carbon credits can significantly accelerate loan repayment by providing additional revenue streams beyond energy cost savings.\n\n")
+                f.write("The program integrates carbon credit revenues with energy cost savings to accelerate loan repayment.\n\n")
 
                 for scenario_name, repayment in loan_repayment.items():
                     f.write(f"### {scenario_name.capitalize()} Scenario\n\n")
 
                     if repayment['payback_period'] is not None:
+                        f.write(f"- **Loan Amount:** ${repayment['loan_amount']/1e6:.1f} million\n")
+                        f.write(f"- **Interest Rate:** {repayment['interest_rate']*100:.1f}%\n")
+                        f.write(f"- **Grace Period:** {repayment['grace_period']} years\n")
                         f.write(f"- **Payback Period:** {repayment['payback_period']:.2f} years\n")
                         f.write(f"- **Payback Completion:** Year {repayment['payback_year']:.1f}\n")
 
@@ -1333,19 +1479,15 @@ class EnergyEfficiencyAnalyzer:
                         total_carbon = np.sum(repayment['carbon_payment']) / 1e6
                         total_payment = total_energy + total_carbon
 
-                        f.write(
-                            f"- **Total Energy Savings Payment:** ${total_energy:.2f} million ({(total_energy / total_payment * 100):.1f}%)\n")
-                        f.write(
-                            f"- **Total Carbon Credit Payment:** ${total_carbon:.2f} million ({(total_carbon / total_payment * 100):.1f}%)\n")
+                        f.write(f"- **Total Energy Savings Payment:** ${total_energy:.2f} million ({(total_energy / total_payment * 100):.1f}%)\n")
+                        f.write(f"- **Total Carbon Credit Payment:** ${total_carbon:.2f} million ({(total_carbon / total_payment * 100):.1f}%)\n")
                         f.write(f"- **Total Repayment Amount:** ${total_payment:.2f} million\n\n")
                     else:
                         f.write("- No complete payback within the analysis timeframe.\n\n")
 
                     f.write("#### Annual Repayment Schedule\n\n")
-                    f.write(
-                        "| Year | Energy Payment ($M) | Carbon Payment ($M) | Total Payment ($M) | Remaining Balance ($M) |\n")
-                    f.write(
-                        "|------|---------------------|---------------------|--------------------|-----------------------|\n")
+                    f.write("| Year | Energy Payment ($M) | Carbon Payment ($M) | Total Payment ($M) | Remaining Balance ($M) |\n")
+                    f.write("|------|---------------------|---------------------|--------------------|-----------------------|\n")
 
                     for i, year in enumerate(repayment['years']):
                         energy_payment = repayment['energy_payment'][i] / 1e6
@@ -1353,62 +1495,64 @@ class EnergyEfficiencyAnalyzer:
                         total_payment = repayment['total_payment'][i] / 1e6
                         remaining = repayment['remaining_balance'][i] / 1e6
 
-                        f.write(
-                            f"| {year} | ${energy_payment:.2f} | ${carbon_payment:.2f} | ${total_payment:.2f} | ${max(0, remaining):.2f} |\n")
+                        f.write(f"| {year} | ${energy_payment:.2f} | ${carbon_payment:.2f} | ${total_payment:.2f} | ${max(0, remaining):.2f} |\n")
 
                     f.write("\n")
 
             # NDC Contribution
-            f.write("## Contribution to Thailand's NDC\n\n")
-            f.write(
-                "Thailand's Nationally Determined Contribution (NDC) under the Paris Agreement targets greenhouse gas emissions reduction. Energy efficiency projects registered under T-VER can contribute to these national targets:\n\n")
+            f.write("## Climate Policy Contribution\n\n")
 
-            # Calculate contribution to a hypothetical 20% reduction target by 2030
+            f.write("The program will significantly contribute to climate mitigation targets and policy objectives:\n\n")
+
+            # Calculate contribution based on 2030 values
             if 'high' in carbon_credits and 'bau' in results and 2030 in results['years']:
                 idx_2030 = list(results['years']).index(2030)
                 bau_emissions = results['bau']['co2'][idx_2030] * results['bau']['population'][idx_2030]
-                reduced_emissions = results['scenarios']['high']['co2'][idx_2030] * results['bau']['population'][idx_2030]
-                reduction_percentage = (bau_emissions - reduced_emissions) / bau_emissions * 100
 
-                f.write(
-                    f"- High efficiency scenario could deliver ~{reduction_percentage:.1f}% reduction from BAU by 2030\n")
-                f.write("- This represents a significant portion of Thailand's NDC commitment\n")
-                f.write("- T-VER credits from these reductions can be used for:\n")
-                f.write("  - Domestic offsetting under the upcoming carbon tax\n")
-                f.write("  - International voluntary market sales\n")
-                f.write("  - Direct counting towards NDC targets\n\n")
+                for scenario, data in results['scenarios'].items():
+                    scenario_emissions = data['co2'][idx_2030] * results['bau']['population'][idx_2030]
+                    reduction_percentage = (bau_emissions - scenario_emissions) / bau_emissions * 100
+                    f.write(f"- **{scenario.capitalize()} Scenario:** {reduction_percentage:.1f}% reduction from BAU by 2030\n")
+
+                f.write("\nThese reductions can be used for:\n")
+                f.write("- Fulfilling national climate commitments\n")
+                f.write("- Supporting carbon neutrality goals\n")
+                f.write("- Developing domestic carbon market infrastructure\n\n")
 
             # Recommendations
             f.write("## Recommendations\n\n")
 
-            f.write(
-                "1. **Establish T-VER Project Pipeline:** Develop a portfolio of energy efficiency projects aligned with T-VER methodologies\n")
-            f.write(
-                "2. **Focus on High-Value Sectors:** Prioritize agriculture and industrial efficiency projects with higher credit prices\n")
-            f.write(
-                "3. **Aggregate Small Projects:** Combine smaller projects to reduce transaction costs and achieve price premiums\n")
-            f.write(
-                "4. **Integrate with Carbon Tax:** Position energy efficiency projects to benefit from Thailand's planned carbon tax\n")
-            f.write(
-                "5. **Enhance MRV Systems:** Invest in robust monitoring, reporting, and verification to maximize credit issuance\n")
-            f.write(
-                "6. **Use Carbon Revenue for Repayment:** Dedicate a portion of carbon credit revenue to accelerate loan repayment\n")
-            f.write(
-                "7. **Explore Advance Market Commitments:** Secure upfront financing by selling future carbon credits to interested buyers\n\n")
+            # Find best scenario based on ROI or payback
+            best_scenario = None
+            if loan_repayment:
+                payback_periods = {s: loan_repayment[s]['payback_period'] for s in loan_repayment if loan_repayment[s]['payback_period']}
+                if payback_periods:
+                    best_scenario = min(payback_periods, key=payback_periods.get)
 
+            if best_scenario:
+                f.write(f"1. **Implementation Strategy:** The {best_scenario.capitalize()} efficiency scenario offers the best balance of climate impact and financial sustainability.\n")
+            else:
+                # Fall back to ROI comparison
+                rois = {s: benefits['economic'][s]['roi'] for s in benefits['economic']}
+                best_scenario = max(rois, key=rois.get)
+                f.write(f"1. **Implementation Strategy:** The {best_scenario.capitalize()} efficiency scenario offers the best return on investment.\n")
+
+            f.write("2. **Credit Aggregation:** Aggregating carbon credits from multiple projects increases marketability and value.\n")
+            f.write("3. **Sector Prioritization:** Focus on sectors with highest carbon credit value and implementation feasibility.\n")
+            f.write("4. **MRV Systems:** Implement robust monitoring and verification to maximize credit issuance.\n")
+            f.write("5. **Market Engagement:** Actively engage with international carbon credit buyers to secure premium prices.\n\n")
+
+            # Conclusion
             f.write("## Conclusion\n\n")
-            f.write(
-                "The integration of Thailand's T-VER programme with energy efficiency initiatives presents a significant opportunity to accelerate the transition to a low-carbon economy while generating financial returns. The higher prices for agricultural and forestry credits make these sectors particularly attractive, while the industrial sector offers large volume potential. By strategically developing projects that align with T-VER methodologies and Thailand's NDC commitments, the country can achieve substantial emission reductions while accelerating the repayment of energy efficiency investments.\n\n")
+            f.write(f"The low-carbon city financing program presents a strategic approach to accelerating climate action in {country}. By monetizing carbon credits and capturing energy cost savings, the program creates a sustainable financing mechanism that can transform urban infrastructure while meeting climate goals.\n\n")
+            f.write("The program's integrated approach leverages international climate finance while building domestic capacity for low-carbon development. With proper implementation and carbon market integration, the initiative can deliver substantial environmental benefits while maintaining financial sustainability.\n\n")
+            f.write("*Note: This analysis is based on forecasted data and current market conditions. Results will vary based on implementation effectiveness and market developments.*\n")
 
-            f.write(
-                "*Note: This analysis is based on forecasted data and current T-VER market conditions. Actual results may vary based on market developments and policy changes.*\n")
-
-        print(f"  T-VER integration report saved to {report_file}")
-
+        print(f"  Report saved to {report_file}")
 
     def analyze_country(self, country):
         """
-        Perform energy efficiency analysis for a specific country with T-VER integration for Thailand
+        Perform energy efficiency analysis for a specific country with financing program integration
 
         Parameters:
         -----------
@@ -1430,6 +1574,11 @@ class EnergyEfficiencyAnalyzer:
 
         try:
             forecasts = pd.read_csv(forecast_file)
+
+            # Validate forecast data
+            validation_passed = self.validate_forecast_data(forecasts, country)
+            if not validation_passed:
+                print("WARNING: Proceeding with analysis despite validation warnings. Results may be unreliable.")
 
             # Check if required indicators exist (in any form - original or forecast)
             required_base_indicators = ['Demand (TWh)', 'GDP (current US$)', 'CO2 emissions (metric tons per capita)',
@@ -1455,35 +1604,24 @@ class EnergyEfficiencyAnalyzer:
             # Calculate carbon credits
             carbon_credits = self._calculate_carbon_credits(country, forecasts, results)
 
-            # For Thailand, calculate T-VER loan repayment
+            # Calculate loan repayment for financing program
             loan_repayment = None
             if is_thailand:
-                # Estimate loan amount based on medium scenario benefits
-                scenario = 'medium'
-                if scenario in benefits['economic']:
-                    energy_savings = benefits['economic'][scenario]['energy_savings_twh']
-                    energy_cost_savings = benefits['economic'][scenario]['energy_cost_savings']
-
-                    # Use first 5 years of cost savings as loan amount
-                    loan_amount = np.sum(energy_cost_savings[:5])
-                    loan_repayment = self._calculate_tver_loan_repayment(
-                        country, results, benefits, carbon_credits, loan_amount, world_bank_share=0.4
-                    )
+                loan_repayment = self._calculate_loan_repayment(country, results, benefits, carbon_credits)
 
             # Generate standard visualizations
             self._create_visualizations(country, forecasts, results, benefits, carbon_credits)
 
-            # For Thailand, generate additional T-VER specific visualizations
+            # For Thailand, generate additional visualizations
             if is_thailand:
                 self._create_thailand_specific_visualizations(country, results, benefits, carbon_credits)
 
             # Generate standard report
             self._generate_report(country, forecasts, results, benefits, carbon_credits)
 
-            # For Thailand, generate T-VER integration report
+            # Generate financing program report for Thailand
             if is_thailand:
-                self._generate_tver_integration_report(country, forecasts, results, benefits, carbon_credits,
-                                                       loan_repayment)
+                self._generate_program_report(country, forecasts, results, benefits, carbon_credits, loan_repayment)
 
             return results
 
@@ -1492,7 +1630,6 @@ class EnergyEfficiencyAnalyzer:
             import traceback
             traceback.print_exc()
             return None
-
 
     def analyze_all_countries(self):
         """Analyze all available countries"""
@@ -1568,9 +1705,9 @@ def run_efficiency_analysis(base_forecaster):
 if __name__ == "__main__":
     import sys
 
-    print("ASEAN Energy Efficiency Analyzer")
+    print("Energy Efficiency Analyzer")
     print("--------------------------------")
-    print("Note: This file is designed to be imported by the main ASEAN forecaster script.")
+    print("Note: This file is designed to be imported by the main forecaster script.")
     print("      For standalone use, provide a CSV file with forecast data.")
     print()
 
