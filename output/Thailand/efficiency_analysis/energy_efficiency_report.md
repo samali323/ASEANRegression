@@ -1,6 +1,6 @@
 # Energy Efficiency Analysis for Thailand
 
-*Generated on 2025-02-24*
+*Generated on 2025-02-25*
 
 ## Executive Summary
 
@@ -8,27 +8,27 @@
 
 **Low Efficiency Scenario:**
 
-- Return on Investment: 0.0%
+- Return on Investment: -82.5%
 - Payback Period: Beyond analysis timeframe
-- Total Economic Benefit: $nan billion
-- Total CO2 Reduction: nan million metric tons
-- Potential Carbon Credit Value: $nan million
+- Total Economic Benefit: $-128.14 billion
+- Total CO2 Reduction: 568.80 million metric tons
+- Potential Carbon Credit Value: $8547.55 million
 
 **Medium Efficiency Scenario:**
 
-- Return on Investment: 0.0%
+- Return on Investment: -83.9%
 - Payback Period: Beyond analysis timeframe
-- Total Economic Benefit: $nan billion
-- Total CO2 Reduction: nan million metric tons
-- Potential Carbon Credit Value: $nan million
+- Total Economic Benefit: $-260.75 billion
+- Total CO2 Reduction: 1048.86 million metric tons
+- Potential Carbon Credit Value: $15579.28 million
 
 **High Efficiency Scenario:**
 
-- Return on Investment: 0.0%
+- Return on Investment: -85.2%
 - Payback Period: Beyond analysis timeframe
-- Total Economic Benefit: $nan billion
-- Total CO2 Reduction: nan million metric tons
-- Potential Carbon Credit Value: $nan million
+- Total Economic Benefit: $-463.44 billion
+- Total CO2 Reduction: 1688.93 million metric tons
+- Potential Carbon Credit Value: $24954.92 million
 
 ### Recommendations
 
@@ -41,7 +41,7 @@
 
 ### Climate Change Impacts
 
-Without energy efficiency improvements, climate change is projected to increase energy demand due to:
+All scenarios incorporate climate change impacts, which are projected to increase energy demand due to:
 
 - Rising temperatures (projected 2.0% increase per year)
 - Increased cooling demand (1.5% increase per year)
@@ -69,12 +69,14 @@ Without energy efficiency improvements, climate change is projected to increase 
 
 ### Carbon Credit Opportunities
 
-Energy efficiency projects provide excellent opportunities for carbon credit generation:
+Thailand's Voluntary Emission Reduction (T-VER) program offers excellent opportunities for carbon credit generation:
 
-- **Pricing Trajectory:**
-  - Current price: $15 per ton CO2
-  - 2030 projected price: $40 per ton CO2
-  - 2035 projected price: $75 per ton CO2
+- **Current T-VER Prices by Sector:**
+  - Agriculture/Forestry: $30.0 per ton CO2
+  - Solar Energy: $3.5 per ton CO2
+  - Industrial: $4.5 per ton CO2
+  - Building: $4.8 per ton CO2
+  - Market Average: $5.0 per ton CO2
 
 - **Aggregation Benefits:**
   - Small-scale efficiency projects can be difficult to register individually
