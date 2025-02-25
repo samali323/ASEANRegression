@@ -894,6 +894,8 @@ def main():
                         help='Forecasting method to use (default: both)')
     parser.add_argument('--file', type=str, default='ASEAN_2035.csv',
                         help='Input CSV file (default: ASEAN_2035.csv)')
+    parser.add_argument('--efficiency', action='store_true',
+                        help='Run energy efficiency analysis after forecasting')
 
     args = parser.parse_args()
 
@@ -962,6 +964,24 @@ def main():
         forecaster.combine_forecasts()
 
     print("\nForecasting complete!")
+
+    # Run energy efficiency analysis if requested
+    if args.efficiency:
+        from energy_efficiency_analyzer import run_efficiency_analysis
+        run_efficiency_analysis(forecaster)
+    else:
+        # Ask if user wants to run energy efficiency analysis
+        while True:
+            response = input("\nWould you like to run energy efficiency analysis? (y/n): ")
+            if response.lower() in ['y', 'yes']:
+                from energy_efficiency_analyzer import run_efficiency_analysis
+                run_efficiency_analysis(forecaster)
+                break
+            elif response.lower() in ['n', 'no']:
+                print("Skipping energy efficiency analysis.")
+                break
+            else:
+                print("Invalid response. Please enter 'y' or 'n'.")
 
 if __name__ == "__main__":
     main()
