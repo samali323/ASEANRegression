@@ -119,22 +119,27 @@ class EnergyEfficiencyAnalyzer:
         # Implementation cost efficiency
         self.implementation_cost_factor = 0.6  # 40% reduction from economies of scale
 
-        # Default efficiency improvement scenarios with realistic values
-        self.efficiency_scenarios = efficiency_scenarios or {
-            'low': {
-                'demand_reduction': 0.12,  # 12% reduction (LED streetlighting, basic EE)
-                'co2_reduction': 0.18,     # 18% CO2 reduction
-                'implementation_cost': 0.008  # 0.8% of GDP
+        # Appliance lifetime and turnover rates
+        self.appliance_turnover = {
+            'residential_ac': {
+                'lifetime_years': 10,
+                'replacement_rate': 0.09,  # 9% per year
+                'efficiency_gain_per_replacement': 0.15  # 15% improvement with new unit
             },
-            'medium': {
-                'demand_reduction': 0.25,  # 25% reduction (comprehensive urban EE program)
-                'co2_reduction': 0.35,     # 35% CO2 reduction
-                'implementation_cost': 0.015  # 1.5% of GDP
+            'commercial_ac': {
+                'lifetime_years': 15,
+                'replacement_rate': 0.06,  # 6% per year
+                'efficiency_gain_per_replacement': 0.12  # 12% improvement with new unit
             },
-            'high': {
-                'demand_reduction': 0.40,  # 40% reduction (ambitious program across all sectors)
-                'co2_reduction': 0.55,     # 55% CO2 reduction
-                'implementation_cost': 0.025  # 2.5% of GDP
+            'refrigerators': {
+                'lifetime_years': 12,
+                'replacement_rate': 0.08,  # 8% per year
+                'efficiency_gain_per_replacement': 0.10  # 10% improvement with new unit
+            },
+            'lighting': {
+                'lifetime_years': 5,
+                'replacement_rate': 0.18,  # 18% per year
+                'efficiency_gain_per_replacement': 0.25  # 25% improvement with new unit (LED adoption)
             }
         }
 
@@ -142,7 +147,59 @@ class EnergyEfficiencyAnalyzer:
         self.climate_factors = {
             'cooling_demand_increase': 0.006,  # 0.6% increase per year
             'temperature_increase': 0.003,     # 0.3% increase per year
-            'extreme_weather_cost': 0.003      # 0.3% of GDP impact
+            'extreme_weather_cost': 0.003,     # 0.3% of GDP impact
+            'ac_efficiency_improvement': 0.015, # 1.5% natural efficiency improvement per year
+            'technology_learning_rate': 0.12    # 12% cost reduction per doubling of capacity
+        }
+
+        # Adaptive scenarios with S-curve adoption for Thailand
+        self.adaptive_scenarios = {
+            'low': {
+                'initial_adoption_rate': 0.02,    # 2% initial adoption rate
+                'max_adoption_rate': 0.05,        # 5% max annual adoption rate
+                'saturation_level': 0.65,         # 65% market saturation
+                'appliance_turnover_factor': 1.0,  # Standard appliance turnover
+                'demand_reduction_max': 0.18,     # 18% max demand reduction
+                'co2_reduction_max': 0.25,        # 25% max CO2 reduction
+                'implementation_cost': 0.008      # 0.8% of GDP
+            },
+            'medium': {
+                'initial_adoption_rate': 0.03,    # 3% initial adoption rate
+                'max_adoption_rate': 0.08,        # 8% max annual adoption rate
+                'saturation_level': 0.80,         # 80% market saturation
+                'appliance_turnover_factor': 1.2,  # 20% accelerated turnover
+                'demand_reduction_max': 0.32,     # 32% max demand reduction
+                'co2_reduction_max': 0.45,        # 45% max CO2 reduction
+                'implementation_cost': 0.015      # 1.5% of GDP
+            },
+            'high': {
+                'initial_adoption_rate': 0.05,    # 5% initial adoption rate
+                'max_adoption_rate': 0.12,        # 12% max annual adoption rate
+                'saturation_level': 0.90,         # 90% market saturation
+                'appliance_turnover_factor': 1.5,  # 50% accelerated turnover
+                'demand_reduction_max': 0.50,     # 50% max demand reduction
+                'co2_reduction_max': 0.65,        # 65% max CO2 reduction
+                'implementation_cost': 0.025      # 2.5% of GDP
+            }
+        }
+
+        # Traditional efficiency scenarios (for countries other than Thailand)
+        self.efficiency_scenarios = efficiency_scenarios or {
+            'low': {
+                'demand_reduction': 0.12,  # 12% reduction (beyond natural efficiency improvements)
+                'co2_reduction': 0.18,     # 18% CO2 reduction
+                'implementation_cost': 0.008  # 0.8% of GDP
+            },
+            'medium': {
+                'demand_reduction': 0.25,  # 25% reduction (beyond natural efficiency improvements)
+                'co2_reduction': 0.35,     # 35% CO2 reduction
+                'implementation_cost': 0.015  # 1.5% of GDP
+            },
+            'high': {
+                'demand_reduction': 0.40,  # 40% reduction (beyond natural efficiency improvements)
+                'co2_reduction': 0.55,     # 55% CO2 reduction
+                'implementation_cost': 0.025  # 2.5% of GDP
+            }
         }
 
         # Add carbon market information
@@ -155,9 +212,44 @@ class EnergyEfficiencyAnalyzer:
             'projected_2035': 25   # 2035 price
         }
 
+        # Thailand's historical energy efficiency investments & programs
+        self.thailand_ee_investments = {
+            # Historical investments in million USD
+            'historical': {
+                '2015-2020': 450,  # Energy Efficiency Development Plan investments
+                '2020-2023': 680,  # Recent EE investments
+            },
+            # Types of energy efficiency programs
+            'program_types': {
+                'building_codes': 0.25,       # 25% of investment
+                'appliance_standards': 0.30,  # 30% of investment
+                'industrial_programs': 0.20,  # 20% of investment
+                'awareness_campaigns': 0.10,  # 10% of investment
+                'utility_programs': 0.15      # 15% of investment
+            }
+        }
+
+        # Sample data for Thailand's historical EE programs
+        self.thailand_ee_data = {
+            'historical_investments': pd.DataFrame({
+                'Year': range(2010, 2024),
+                'Investment_Million_USD': [120, 150, 180, 200, 220, 250, 280, 300, 320, 350, 380, 420, 450, 480]
+            }),
+            'energy_savings': pd.DataFrame({
+                'Year': range(2010, 2024),
+                'Savings_GWh': [200, 350, 500, 750, 1000, 1250, 1500, 1800, 2100, 2400, 2700, 3000, 3300, 3600]
+            }),
+            'program_breakdown': {
+                'Building_Codes': 0.26,
+                'Appliance_Standards': 0.31,
+                'Industrial_Programs': 0.19,
+                'Awareness_Campaigns': 0.09,
+                'Utility_Programs': 0.15
+            }
+        }
+
         # Create output directories
         self._create_output_dirs()
-
     def _create_output_dirs(self):
         """Create necessary output directories"""
         if self.forecaster.selected_country:
@@ -241,6 +333,104 @@ class EnergyEfficiencyAnalyzer:
 
         return validation_passed
 
+    def calculate_s_curve_adoption(self, years, scenario_params):
+        """
+        Calculate S-curve adoption rate over time
+
+        Parameters:
+        -----------
+        years : array-like
+            Array of years to calculate adoption for
+        scenario_params : dict
+            Parameters for the scenario (initial_adoption_rate, max_adoption_rate, saturation_level)
+
+        Returns:
+        --------
+        array
+            Adoption rates for each year
+        """
+        # Parameters for the logistic S-curve
+        initial_rate = scenario_params['initial_adoption_rate']
+        max_rate = scenario_params['max_adoption_rate']
+        saturation = scenario_params['saturation_level']
+
+        # Midpoint of the years array (for S-curve centering)
+        mid_year = (years[-1] + years[0]) / 2
+
+        # Steepness of the curve
+        k = 0.5
+
+        # Calculate S-curve for adoption rates
+        adoption_rates = []
+        cumulative_adoption = 0
+
+        for year in years:
+            # Logistic S-curve formula
+            s_curve_factor = 1 / (1 + np.exp(-k * (year - mid_year)))
+
+            # Calculate adoption rate for this year (varies between initial and max)
+            adoption_rate = initial_rate + (max_rate - initial_rate) * s_curve_factor
+
+            # Adjust for approaching saturation
+            if cumulative_adoption > 0:
+                # Reduce adoption as we approach saturation
+                saturation_factor = max(0, 1 - (cumulative_adoption / saturation))
+                adoption_rate *= saturation_factor
+
+            # Add to cumulative adoption (but don't exceed saturation)
+            cumulative_adoption = min(cumulative_adoption + adoption_rate, saturation)
+            adoption_rates.append(adoption_rate)
+
+        return np.array(adoption_rates)
+
+    def calculate_cumulative_adoption(self, adoption_rates):
+        """Calculate cumulative adoption from annual adoption rates"""
+        return np.cumsum(adoption_rates)
+
+    def calculate_natural_efficiency_improvement(self, years, base_year):
+        """
+        Calculate natural efficiency improvement from appliance turnover
+
+        Parameters:
+        -----------
+        years : array-like
+            Array of years to calculate for
+        base_year : int
+            Base year for calculations
+
+        Returns:
+        --------
+        array
+            Efficiency improvement factors for each year
+        """
+        efficiency_improvements = []
+
+        for year in years:
+            years_passed = year - base_year
+
+            # Calculate weighted average efficiency improvement from appliance turnover
+            weighted_improvement = 0
+            total_weight = 0
+
+            for appliance, data in self.appliance_turnover.items():
+                # Calculate how many replacement cycles have occurred
+                replacement_cycles = years_passed * data['replacement_rate']
+                # Efficiency gain from replacements
+                efficiency_gain = 1 - (1 - data['efficiency_gain_per_replacement']) ** replacement_cycles
+
+                # Weight by replacement rate (proxy for importance in energy consumption)
+                weighted_improvement += efficiency_gain * data['replacement_rate']
+                total_weight += data['replacement_rate']
+
+            # Normalize by total weight
+            if total_weight > 0:
+                avg_efficiency_improvement = weighted_improvement / total_weight
+            else:
+                avg_efficiency_improvement = 0
+
+            efficiency_improvements.append(avg_efficiency_improvement)
+
+        return np.array(efficiency_improvements)
     def _generate_scenarios(self, country, forecasts):
         """
         Generate energy efficiency scenarios with detailed debugging
@@ -259,6 +449,9 @@ class EnergyEfficiencyAnalyzer:
         """
         print(f"  Generating efficiency scenarios for {country}")
 
+        # Check if this is Thailand (use enhanced model)
+        is_thailand = (country.lower() == 'thailand')
+
         # Print debug info about the incoming data
         debug_print_dataframe_info(forecasts, f"Input data for {country}")
 
@@ -272,9 +465,6 @@ class EnergyEfficiencyAnalyzer:
         future_data = baseline[baseline['Year'] >= 2024].copy()
         if future_data.empty:
             raise ValueError(f"No future data (2024+) found for {country}")
-
-        # Debug future data
-        debug_print_dataframe_info(future_data, f"Future data for {country}")
 
         # Define the relevant indicators and column mapping
         indicators = {
@@ -338,7 +528,7 @@ class EnergyEfficiencyAnalyzer:
             co2_data = future_data[co2_col].copy()
             pop_data = future_data[pop_col].copy()
 
-            # Check for nulls and print warnings
+            # Fill any null values
             for name, series in [("Demand", demand_data), ("GDP", gdp_data),
                                  ("CO2", co2_data), ("Population", pop_data)]:
                 null_count = series.isna().sum()
@@ -373,31 +563,48 @@ class EnergyEfficiencyAnalyzer:
 
             # Use the processed data
             baseline_values = {
-                'demand': demand_data,
-                'co2': co2_data,
-                'gdp': gdp_data,
-                'population': pop_data
+                'demand': demand_data.values,
+                'co2': co2_data.values,
+                'gdp': gdp_data.values,
+                'population': pop_data.values
             }
 
             # Print data preview
             print("\n  Data preview:")
             for key, data in baseline_values.items():
-                print(f"    {key.capitalize()}: min={data.min()}, max={data.max()}, mean={data.mean()}")
+                print(f"    {key.capitalize()}: min={np.min(data)}, max={np.max(data)}, mean={np.mean(data)}")
 
-            # Include climate change impacts (BAU scenario)
+            # Get years and base year
             years = future_data['Year'].values
             base_year = min(years)
-            bau_demand = baseline_values['demand'].copy()
 
-            # Apply climate factors
+            # Calculate natural efficiency improvement from appliance turnover
+            natural_efficiency = self.calculate_natural_efficiency_improvement(years, base_year)
+
+            # Calculate BAU with climate effects and natural efficiency improvement
+            bau_demand = np.array(baseline_values['demand'].copy())
+
+            # Apply climate factors and natural efficiency improvement
             for i, year in enumerate(years):
                 years_passed = year - base_year
-                # Apply compounding climate factor to demand
+
+                # Climate change increases cooling demand
                 climate_multiplier = (1 + self.climate_factors['cooling_demand_increase']) ** years_passed
-                bau_demand.iloc[i] *= climate_multiplier
+
+                # Natural efficiency improvements offset some of this
+                if is_thailand:
+                    # Use detailed natural efficiency model for Thailand
+                    efficiency_multiplier = 1 - natural_efficiency[i]
+                else:
+                    # Simpler model for other countries
+                    natural_efficiency_improvement = self.climate_factors['ac_efficiency_improvement'] * years_passed
+                    efficiency_multiplier = max(0.7, 1 - natural_efficiency_improvement)  # Cap at 30% improvement
+
+                # Apply both factors to BAU demand
+                bau_demand[i] *= climate_multiplier * efficiency_multiplier
 
             # Apply modest CO2 increase due to climate change (less efficiency at higher temps)
-            climate_affected_co2 = baseline_values['co2'].values * np.array(
+            bau_co2 = baseline_values['co2'] * np.array(
                 [(1 + 0.002) ** (y - base_year) for y in years]
             )
 
@@ -405,40 +612,100 @@ class EnergyEfficiencyAnalyzer:
             results = {
                 'years': years,
                 'bau': {  # Business as usual with climate impacts
-                    'demand': bau_demand.values,
-                    'co2': climate_affected_co2,
-                    'gdp': baseline_values['gdp'].values,
-                    'population': baseline_values['population'].values
+                    'demand': bau_demand,
+                    'co2': bau_co2,
+                    'gdp': baseline_values['gdp'],
+                    'population': baseline_values['population']
                 },
+                'natural_efficiency': natural_efficiency,
                 'scenarios': {}
             }
 
-            # Generate scenarios
-            for scenario, params in self.efficiency_scenarios.items():
-                demand_reduction = params['demand_reduction']
-                co2_reduction = params['co2_reduction']
-                implementation_cost = params['implementation_cost']
+            # Use Thailand-specific adaptive scenarios or regular scenarios
+            if is_thailand:
+                # Generate Thailand scenarios with S-curve adoption
+                scenarios = self.adaptive_scenarios
 
-                # Calculate values with efficiency improvements
-                improved_demand = bau_demand.values * (1 - demand_reduction)
-                improved_co2 = baseline_values['co2'].values * (1 - co2_reduction)
+                for scenario_name, params in scenarios.items():
+                    # Calculate S-curve adoption rates
+                    adoption_rates = self.calculate_s_curve_adoption(years, params)
+                    cumulative_adoption = self.calculate_cumulative_adoption(adoption_rates)
 
-                # Calculate implementation costs
-                implementation_costs = baseline_values['gdp'].values * implementation_cost
+                    # Calculate effect of accelerated appliance turnover
+                    turnover_factor = params['appliance_turnover_factor']
+                    if turnover_factor > 1.0:
+                        # Calculate improved efficiency from accelerated turnover
+                        accelerated_efficiency = 1 - (1 - natural_efficiency) * turnover_factor
+                    else:
+                        accelerated_efficiency = natural_efficiency
 
-                # Print scenario summary
-                print(f"\n  {scenario.capitalize()} scenario:")
-                print(f"    Demand reduction: {demand_reduction * 100:.1f}%")
-                print(f"    CO2 reduction: {co2_reduction * 100:.1f}%")
-                print(f"    Implementation cost: {implementation_cost * 100:.1f}% of GDP")
+                    # Calculate demand reduction (increases over time with S-curve)
+                    max_demand_reduction = params['demand_reduction_max']
+                    demand_reduction = max_demand_reduction * cumulative_adoption
 
-                # Store results
-                results['scenarios'][scenario] = {
-                    'demand': improved_demand,
-                    'co2': improved_co2,
-                    'implementation_cost': implementation_costs,
-                    'params': params
-                }
+                    # Apply demand reduction to BAU
+                    scenario_demand = bau_demand * (1 - demand_reduction)
+
+                    # Calculate CO2 reduction (increases over time with S-curve)
+                    max_co2_reduction = params['co2_reduction_max']
+                    co2_reduction = max_co2_reduction * cumulative_adoption
+
+                    # Apply CO2 reduction to BAU
+                    scenario_co2 = bau_co2 * (1 - co2_reduction)
+
+                    # Calculate implementation costs (front-loaded for policy implementation)
+                    base_implementation_cost = params['implementation_cost']
+                    # Cost curve is higher in early years then declines with learning
+                    implementation_cost_curve = base_implementation_cost * (
+                            1 - np.array([min(0.5, self.climate_factors['technology_learning_rate'] *
+                                              np.log2(1 + i)) for i in range(len(years))])
+                    )
+                    implementation_costs = results['bau']['gdp'] * implementation_cost_curve
+
+                    # Store scenario results
+                    results['scenarios'][scenario_name] = {
+                        'demand': scenario_demand,
+                        'co2': scenario_co2,
+                        'implementation_cost': implementation_costs,
+                        'adoption_rates': adoption_rates,
+                        'cumulative_adoption': cumulative_adoption,
+                        'demand_reduction': demand_reduction,
+                        'co2_reduction': co2_reduction,
+                        'params': params
+                    }
+
+                    # Print scenario summary
+                    print(f"\n  {scenario_name.capitalize()} scenario:")
+                    print(f"    Max demand reduction: {max_demand_reduction * 100:.1f}%")
+                    print(f"    Max CO2 reduction: {max_co2_reduction * 100:.1f}%")
+                    print(f"    Final adoption level: {cumulative_adoption[-1] * 100:.1f}%")
+            else:
+                # Generate standard scenarios for other countries
+                for scenario, params in self.efficiency_scenarios.items():
+                    demand_reduction = params['demand_reduction']
+                    co2_reduction = params['co2_reduction']
+                    implementation_cost = params['implementation_cost']
+
+                    # Apply reductions to BAU (calculate departures from BAU)
+                    improved_demand = bau_demand * (1 - demand_reduction)
+                    improved_co2 = bau_co2 * (1 - co2_reduction)
+
+                    # Calculate implementation costs
+                    implementation_costs = results['bau']['gdp'] * implementation_cost
+
+                    # Print scenario summary
+                    print(f"\n  {scenario.capitalize()} scenario:")
+                    print(f"    Demand reduction: {demand_reduction * 100:.1f}%")
+                    print(f"    CO2 reduction: {co2_reduction * 100:.1f}%")
+                    print(f"    Implementation cost: {implementation_cost * 100:.1f}% of GDP")
+
+                    # Store results
+                    results['scenarios'][scenario] = {
+                        'demand': improved_demand,
+                        'co2': improved_co2,
+                        'implementation_cost': implementation_costs,
+                        'params': params
+                    }
 
             return results
 
@@ -447,7 +714,6 @@ class EnergyEfficiencyAnalyzer:
             import traceback
             traceback.print_exc()
             raise
-
     def _calculate_benefits(self, country, forecasts, results):
         """
         Calculate economic and environmental benefits of efficiency scenarios
@@ -462,17 +728,18 @@ class EnergyEfficiencyAnalyzer:
             }
 
             years = results['years']
+            is_thailand = (country.lower() == 'thailand')
 
             # Energy cost assumptions (USD per MWh)
             energy_cost = {
                 'current': self.energy_cost_per_mwh,
-                'projected': [self.energy_cost_per_mwh * (1 + self.energy_price_increase) ** (y - min(years)) for y in years]
+                'projected': [self.energy_cost_per_mwh * (1 + self.energy_price_increase) ** (y - min(years)) for y in range(len(years))]
             }
 
             # Environmental damage cost (USD per ton of CO2)
             env_damage_cost = {
                 'current': self.carbon_damage_cost,
-                'projected': [self.carbon_damage_cost * (1 + self.carbon_damage_increase) ** (y - min(years)) for y in years]
+                'projected': [self.carbon_damage_cost * (1 + self.carbon_damage_increase) ** (y - min(years)) for y in range(len(years))]
             }
 
             # Calculate benefits for each scenario
@@ -566,6 +833,11 @@ class EnergyEfficiencyAnalyzer:
                     'job_creation': job_creation,
                     'health_benefits': health_benefits
                 }
+
+                # Add adoption-related data for Thailand
+                if is_thailand and 'adoption_rates' in data:
+                    benefits['economic'][scenario]['adoption_rates'] = data['adoption_rates']
+                    benefits['economic'][scenario]['cumulative_adoption'] = data['cumulative_adoption']
 
             return benefits
 
@@ -731,162 +1003,16 @@ class EnergyEfficiencyAnalyzer:
             }
 
             # Add sector-specific information
-            if is_thailand:
+            if is_thailand and sector_breakdown:
                 carbon_credits[scenario].update({
                     'sector_breakdown': sector_breakdown
                 })
 
         return carbon_credits
-
-    def _calculate_loan_repayment(self, country, results, benefits, carbon_credits):
-        """
-        Calculate loan repayment schedule for financing program
-
-        Parameters:
-        -----------
-        country : str
-            Country name
-        results : dict
-            Scenario results
-        benefits : dict
-            Benefits calculations
-        carbon_credits : dict
-            Carbon credit calculations
-
-        Returns:
-        --------
-        dict
-            Loan repayment analysis
-        """
-        if country.lower() != 'thailand':
-            return None
-
-        print(f"  Calculating loan repayment for {country}")
-
-        # Program loan amount
-        loan_amount = self.loan_amount  # From program configuration
-
-        years = results['years']
-        repayment_analysis = {}
-
-        # Loan terms
-        annual_interest_rate = self.loan_interest_rate
-        grace_period_years = self.loan_grace_period
-
-        # Revenue allocation to loan repayment
-        energy_savings_allocation = self.energy_savings_allocation
-        carbon_allocation = self.carbon_revenue_allocation
-
-        # Calculate for each scenario
-        for scenario in benefits['economic']:
-            # Get energy cost savings and carbon revenue
-            energy_savings = benefits['economic'][scenario]['energy_cost_savings']
-            carbon_revenue = carbon_credits[scenario]['net_value']  # After management fee
-
-            # Calculate payment streams
-            energy_payment = energy_savings * energy_savings_allocation
-            carbon_payment = carbon_revenue * carbon_allocation
-
-            # Calculate total annual payment
-            total_payment = energy_payment + carbon_payment
-
-            # Calculate remaining balance with interest
-            remaining_balance = np.zeros(len(years))
-
-            # Apply grace period (interest accrues but no principal payments)
-            remaining_balance[0] = loan_amount
-
-            for i in range(1, min(grace_period_years, len(years))):
-                interest = remaining_balance[i-1] * annual_interest_rate
-                remaining_balance[i] = remaining_balance[i-1] + interest
-
-            # Calculate repayment after grace period
-            for i in range(grace_period_years, len(years)):
-                if i >= len(years):
-                    break
-
-                interest = remaining_balance[i-1] * annual_interest_rate
-                payment = total_payment[i]
-                remaining_balance[i] = remaining_balance[i-1] + interest - payment
-                if remaining_balance[i] < 0:
-                    remaining_balance[i] = 0
-
-            # Find payback period
-            payback_period = None
-            payback_year = None
-
-            for i, year in enumerate(years):
-                if i >= grace_period_years and remaining_balance[i] <= 0:
-                    if i > grace_period_years and remaining_balance[i-1] > 0:
-                        # Interpolate for more precise estimate
-                        prev_balance = remaining_balance[i-1]
-                        # Calculate balance reduction in this period
-                        interest = prev_balance * annual_interest_rate
-                        balance_reduction = prev_balance + interest - total_payment[i]
-                        if balance_reduction < 0:
-                            # Calculate what fraction of the year is needed
-                            fraction = prev_balance / (total_payment[i] - interest)
-                            payback_period = i - grace_period_years + fraction
-                            payback_year = years[i-1] + fraction
-                        else:
-                            payback_period = i - grace_period_years
-                            payback_year = years[i]
-                    else:
-                        payback_period = i - grace_period_years
-                        payback_year = years[i]
-                    break
-
-            # If no payback within the period, estimate remaining years
-            if payback_period is None and remaining_balance[-1] > 0:
-                # Estimate years beyond our timeframe
-                annual_payment_avg = np.mean(total_payment[-3:])  # Average of last 3 years
-                remaining_with_interest = remaining_balance[-1] * (1 + annual_interest_rate)
-                if annual_payment_avg > remaining_balance[-1] * annual_interest_rate:
-                    years_beyond = remaining_balance[-1] / (annual_payment_avg - (remaining_balance[-1] * annual_interest_rate))
-                    payback_period = len(years) - grace_period_years + years_beyond
-                    payback_year = years[-1] + years_beyond
-                else:
-                    payback_period = None
-                    payback_year = None
-
-            # Store results
-            repayment_analysis[scenario] = {
-                'years': years,
-                'energy_payment': energy_payment,
-                'carbon_payment': carbon_payment,
-                'total_payment': total_payment,
-                'remaining_balance': remaining_balance,
-                'payback_period': payback_period,
-                'payback_year': payback_year,
-                'loan_amount': loan_amount,
-                'interest_rate': annual_interest_rate,
-                'grace_period': grace_period_years,
-                'allocation': {
-                    'energy_savings': energy_savings_allocation,
-                    'carbon_credits': carbon_allocation
-                }
-            }
-
-            # Print summary
-            if payback_period is not None:
-                energy_total = np.sum(energy_payment) / 1e6
-                carbon_total = np.sum(carbon_payment) / 1e6
-                total = energy_total + carbon_total
-                energy_pct = (energy_total / total) * 100 if total > 0 else 0
-                carbon_pct = (carbon_total / total) * 100 if total > 0 else 0
-
-                print(f"    {scenario.capitalize()} scenario:")
-                print(f"    Payback period: {payback_period:.2f} years (by {payback_year:.2f})")
-                print(f"    Energy payments: ${energy_total:.2f} million ({energy_pct:.1f}%)")
-                print(f"    Carbon payments: ${carbon_total:.2f} million ({carbon_pct:.1f}%)")
-            else:
-                print(f"    {scenario.capitalize()} scenario does not reach payback within timeframe")
-
-        return repayment_analysis
-
     def _create_visualizations(self, country, forecasts, results, benefits, carbon_credits):
         """
-        Create visualizations for energy efficiency analysis
+        Create visualizations for energy efficiency analysis with enhanced
+        visualizations showing adoption curves and departures from BAU
 
         Parameters:
         -----------
@@ -911,16 +1037,29 @@ class EnergyEfficiencyAnalyzer:
 
         years = results['years']
 
-        # 1. Energy Demand Scenarios
+        # 1. Energy Demand Scenarios - Departures from BAU
         plt.figure(figsize=(12, 8))
+
+        # Plot BAU
         plt.plot(years, results['bau']['demand'], 'r-', linewidth=3, label='Business As Usual')
 
         colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
         for i, (scenario, data) in enumerate(results['scenarios'].items()):
-            plt.plot(years, data['demand'], marker='o', linestyle='-', linewidth=2,
-                     color=colors[i], label=f"{scenario.capitalize()} Efficiency Scenario")
+            # Calculate reductions from BAU
+            reductions = results['bau']['demand'] - data['demand']
 
-        plt.title(f"{country} - Energy Demand Scenarios with Efficiency Improvements", fontsize=15)
+            # Plot as filled area between BAU and scenario line
+            plt.fill_between(years,
+                             results['bau']['demand'] - reductions,
+                             results['bau']['demand'],
+                             color=colors[i], alpha=0.3,
+                             label=f"{scenario.capitalize()} Reduction")
+
+            # Plot the resulting demand line
+            plt.plot(years, data['demand'], marker='o', linestyle='-', linewidth=2,
+                     color=colors[i], label=f"{scenario.capitalize()} Scenario")
+
+        plt.title(f"{country} - Energy Demand: Departures from BAU Trajectory", fontsize=15)
         plt.xlabel("Year", fontsize=12)
         plt.ylabel("Energy Demand (TWh)", fontsize=12)
         plt.grid(True, alpha=0.3)
@@ -929,17 +1068,77 @@ class EnergyEfficiencyAnalyzer:
         plt.savefig(os.path.join(output_dir, 'energy_demand_scenarios.png'), dpi=300)
         plt.close()
 
-        # 2. CO2 Emissions Scenarios
+        # 1b. Natural vs Efficiency-Driven Reductions (only for Thailand)
+        if is_thailand and 'natural_efficiency' in results:
+            plt.figure(figsize=(12, 8))
+
+            # Plot BAU without any efficiency
+            baseline_without_efficiency = results['bau']['demand'] / (1 - results['natural_efficiency'])
+            plt.plot(years, baseline_without_efficiency, 'k-', linewidth=2, label='Baseline (No Efficiency)')
+
+            # Plot BAU with natural efficiency improvements
+            plt.plot(years, results['bau']['demand'], 'r-', linewidth=3, label='Business As Usual (With Natural Efficiency)')
+
+            # Calculate natural efficiency savings
+            natural_savings = baseline_without_efficiency - results['bau']['demand']
+
+            # Plot natural efficiency as filled area
+            plt.fill_between(years,
+                             baseline_without_efficiency - natural_savings,
+                             baseline_without_efficiency,
+                             color='lightgray', alpha=0.5,
+                             label=f"Natural Efficiency Improvements")
+
+            # Plot scenario with most aggressive adoption
+            best_scenario = max(results['scenarios'].keys(),
+                                key=lambda s: results['scenarios'][s]['demand_reduction'][-1]
+                                if 'demand_reduction' in results['scenarios'][s] else 0)
+
+            best_data = results['scenarios'][best_scenario]
+            plt.plot(years, best_data['demand'], linestyle='-', linewidth=2,
+                     color='green', label=f"{best_scenario.capitalize()} Scenario")
+
+            # Plot additional savings from efficiency program
+            additional_savings = results['bau']['demand'] - best_data['demand']
+            plt.fill_between(years,
+                             results['bau']['demand'] - additional_savings,
+                             results['bau']['demand'],
+                             color='green', alpha=0.3,
+                             label=f"Additional Program Savings")
+
+            plt.title(f"{country} - Natural vs Program-Driven Efficiency Gains", fontsize=15)
+            plt.xlabel("Year", fontsize=12)
+            plt.ylabel("Energy Demand (TWh)", fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.legend(loc='best', fontsize=12)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, 'natural_vs_program_efficiency.png'), dpi=300)
+            plt.close()
+
+        # 2. CO2 Emissions Scenarios - Departures from BAU
         plt.figure(figsize=(12, 8))
+
+        # Plot BAU
         plt.plot(years, results['bau']['co2'], 'r-', linewidth=3, label='Business As Usual')
 
         for i, (scenario, data) in enumerate(results['scenarios'].items()):
-            plt.plot(years, data['co2'], marker='o', linestyle='-', linewidth=2,
-                     color=colors[i], label=f"{scenario.capitalize()} Efficiency Scenario")
+            # Calculate reductions from BAU
+            reductions = results['bau']['co2'] - data['co2']
 
-        plt.title(f"{country} - CO2 Emissions Scenarios with Efficiency Improvements", fontsize=15)
+            # Plot as filled area between BAU and scenario line
+            plt.fill_between(years,
+                             results['bau']['co2'] - reductions,
+                             results['bau']['co2'],
+                             color=colors[i], alpha=0.3,
+                             label=f"{scenario.capitalize()} Reduction")
+
+            # Plot the resulting emissions line
+            plt.plot(years, data['co2'], marker='o', linestyle='-', linewidth=2,
+                     color=colors[i], label=f"{scenario.capitalize()} Scenario")
+
+        plt.title(f"{country} - CO₂ Emissions: Departures from BAU Trajectory", fontsize=15)
         plt.xlabel("Year", fontsize=12)
-        plt.ylabel("CO2 Emissions (metric tons per capita)", fontsize=12)
+        plt.ylabel("CO₂ Emissions (metric tons per capita)", fontsize=12)
         plt.grid(True, alpha=0.3)
         plt.legend(loc='best', fontsize=12)
         plt.tight_layout()
@@ -954,7 +1153,7 @@ class EnergyEfficiencyAnalyzer:
 
         for i, (scenario, data) in enumerate(benefits['economic'].items()):
             # For Thailand, include carbon credit revenue in the economic benefits
-            if is_thailand:
+            if is_thailand and carbon_credits and scenario in carbon_credits:
                 carbon_revenue = carbon_credits[scenario]['annual_value'] / 1e9  # Convert to billions
                 energy_savings = data['energy_cost_savings'] / 1e9
                 env_damage = benefits['environmental'][scenario]['env_damage_avoided'] / 1e9
@@ -966,49 +1165,38 @@ class EnergyEfficiencyAnalyzer:
                 plt.bar(x + i * bar_width, carbon_revenue, width=bar_width, bottom=energy_savings,
                         label=f"{scenario.capitalize()} Carbon Credits", color=colors[i], alpha=0.6)
             else:
-                # Original plot for non-Thailand countries
+                # Original plot for non-Thailand countries or if carbon_credits is not available
                 plt.bar(x + i * bar_width, data['net_benefit'] / 1e9, width=bar_width,
                         label=f"{scenario.capitalize()} Scenario", alpha=0.7)
 
-        title = f"{country} - Economic Benefits of Energy Efficiency"
-        if is_thailand:
-            title += " (Including Carbon Revenue)"
-
-        plt.title(title, fontsize=15)
-        plt.xlabel("Year", fontsize=12)
-        plt.ylabel("Billion USD", fontsize=12)
-        plt.xticks(x + bar_width, years)
-        plt.grid(True, alpha=0.3)
-        plt.legend(loc='best', fontsize=10)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'economic_benefits.png'), dpi=300)
-        plt.close()
+        # Same for other parts of code that use carbon_credits
+        # For example, in the Carbon Credits Value section:
 
         # 4. Carbon Credits Value
-        plt.figure(figsize=(12, 8))
+        if carbon_credits:  # Only create this plot if carbon_credits is valid
+            plt.figure(figsize=(12, 8))
 
-        for i, (scenario, data) in enumerate(carbon_credits.items()):
-            plt.plot(years, data['annual_value'] / 1e6, marker='o', linestyle='-', linewidth=2,
-                     color=colors[i], label=f"{scenario.capitalize()} Scenario")
+            for i, (scenario, data) in enumerate(carbon_credits.items()):
+                plt.plot(years, data['annual_value'] / 1e6, marker='o', linestyle='-', linewidth=2,
+                         color=colors[i], label=f"{scenario.capitalize()} Scenario")
 
-            # For Thailand, also show the aggregation potential
+                # For Thailand, also show the aggregation potential
+                if is_thailand:
+                    plt.plot(years, data['aggregation_potential'] / 1e6, marker='x', linestyle='--', linewidth=1,
+                             color=colors[i], label=f"{scenario.capitalize()} with Aggregation Premium")
+
+            title = f"{country} - Annual Carbon Credit Value"
             if is_thailand:
-                plt.plot(years, data['aggregation_potential'] / 1e6, marker='x', linestyle='--', linewidth=1,
-                         color=colors[i], label=f"{scenario.capitalize()} with Aggregation Premium")
+                title += " (Projected)"
 
-        title = f"{country} - Annual Carbon Credit Value"
-        if is_thailand:
-            title += " (Projected)"
-
-        plt.title(title, fontsize=15)
-        plt.xlabel("Year", fontsize=12)
-        plt.ylabel("Carbon Credit Value (Million USD)", fontsize=12)
-        plt.grid(True, alpha=0.3)
-        plt.legend(loc='best', fontsize=12)
-        plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'carbon_credit_value.png'), dpi=300)
-        plt.close()
-
+            plt.title(title, fontsize=15)
+            plt.xlabel("Year", fontsize=12)
+            plt.ylabel("Carbon Credit Value (Million USD)", fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.legend(loc='best', fontsize=12)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, 'carbon_credit_value.png'), dpi=300)
+            plt.close()
         # 5. ROI and Payback Period Comparison
         plt.figure(figsize=(12, 8))
 
@@ -1036,7 +1224,7 @@ class EnergyEfficiencyAnalyzer:
         plt.savefig(os.path.join(output_dir, 'roi_comparison.png'), dpi=300)
         plt.close()
 
-        # 6. NDC Contribution
+        # 6. NDC Contribution - BAU Departures
         plt.figure(figsize=(12, 8))
 
         # Estimate potential NDC contribution (example reduction targets)
@@ -1047,24 +1235,36 @@ class EnergyEfficiencyAnalyzer:
             bau_2030_co2 = results['bau']['co2'][bau_2030_index]
             ndc_target = bau_2030_co2 * 0.7  # 30% reduction
 
-            plt.axhline(y=ndc_target, color='r', linestyle='--', linewidth=2,
-                        label='Example NDC Target (-30% from BAU)')
+            # Plot BAU line
+            plt.plot(years, results['bau']['co2'], 'r-', linewidth=3, label='Business As Usual')
 
-            # Plot BAU and scenarios
-            plt.plot(years, results['bau']['co2'], 'k-', linewidth=2, label='Business As Usual')
+            # Plot NDC target as horizontal line from 2030
+            plt.plot([2030, years[-1]], [ndc_target, ndc_target],
+                     'k--', linewidth=2, label='Example NDC Target (-30% from BAU)')
 
+            # Plot departures from BAU for each scenario
             for i, (scenario, data) in enumerate(results['scenarios'].items()):
+                # Calculate reduction from BAU
+                reduction = results['bau']['co2'] - data['co2']
+
+                # Plot as filled area between BAU and scenario line
+                plt.fill_between(years,
+                                 results['bau']['co2'] - reduction,
+                                 results['bau']['co2'],
+                                 color=colors[i], alpha=0.3,
+                                 label=f"{scenario.capitalize()} Reduction")
+
+                # Plot the scenario line
                 plt.plot(years, data['co2'], marker='o', linestyle='-', linewidth=2,
-                         color=colors[i], label=f"{scenario.capitalize()} Efficiency Scenario")
+                         color=colors[i], label=f"{scenario.capitalize()} Scenario")
 
-            # Add NDC contribution annotations
-            for i, (scenario, data) in enumerate(results['scenarios'].items()):
+                # Add NDC contribution annotations
                 scenario_2030_co2 = data['co2'][bau_2030_index]
-                reduction = (bau_2030_co2 - scenario_2030_co2) / bau_2030_co2 * 100
+                reduction_pct = (bau_2030_co2 - scenario_2030_co2) / bau_2030_co2 * 100
                 ndc_contribution = (bau_2030_co2 - scenario_2030_co2) / (bau_2030_co2 - ndc_target) * 100
 
                 plt.annotate(
-                    f"{scenario.capitalize()}: {reduction:.1f}% reduction\n({ndc_contribution:.1f}% of NDC target)",
+                    f"{scenario.capitalize()}: {reduction_pct:.1f}% reduction\n({ndc_contribution:.1f}% of NDC target)",
                     xy=(2030, scenario_2030_co2), xytext=(2031, scenario_2030_co2),
                     arrowprops=dict(arrowstyle="->", connectionstyle="arc3", color=colors[i]),
                     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec=colors[i], alpha=0.8),
@@ -1072,483 +1272,123 @@ class EnergyEfficiencyAnalyzer:
 
         plt.title(f"{country} - Contribution to NDC Targets", fontsize=15)
         plt.xlabel("Year", fontsize=12)
-        plt.ylabel("CO2 Emissions (metric tons per capita)", fontsize=12)
+        plt.ylabel("CO₂ Emissions (metric tons per capita)", fontsize=12)
         plt.grid(True, alpha=0.3)
         plt.legend(loc='best', fontsize=12)
         plt.tight_layout()
         plt.savefig(os.path.join(output_dir, 'ndc_contribution.png'), dpi=300)
         plt.close()
 
-    def _create_thailand_specific_visualizations(self, country, results, benefits, carbon_credits):
-        """
-        Create Thailand-specific visualizations for carbon market analysis
-
-        Parameters:
-        -----------
-        country : str
-            Country name
-        results : dict
-            Scenario results
-        benefits : dict
-            Benefits calculations
-        carbon_credits : dict
-            Carbon credit calculations
-        """
-        if country.lower() != 'thailand':
-            return
-
-        print(f"  Creating additional market visualizations")
-
-        output_dir = os.path.join('output', country, 'efficiency_analysis', 'plots')
-        os.makedirs(output_dir, exist_ok=True)
-
-        years = results['years']
-
-        # 1. Sector Value Comparison
+        # 7. Yearly Energy Consumption Reduction (vs fixed)
         plt.figure(figsize=(12, 8))
 
-        # Use medium scenario as an example
-        scenario = 'medium'
-        if scenario in carbon_credits and 'sector_breakdown' in carbon_credits[scenario]:
-            sector_data = carbon_credits[scenario]['sector_breakdown']
+        for i, (scenario, data) in enumerate(results['scenarios'].items()):
+            # Use demand_reduction if available (for Thailand), otherwise calculate
+            if 'demand_reduction' in data:
+                yearly_reduction = data['demand_reduction'] * 100  # Convert to percentage
+            else:
+                yearly_reduction = (results['bau']['demand'] - data['demand']) / results['bau']['demand'] * 100
 
-            # Extract data for each sector across years
-            sectors = ['agriculture', 'solar', 'industrial', 'building']
-            sector_values = {sector: [] for sector in sectors}
+            plt.plot(years, yearly_reduction, marker='o', linestyle='-', linewidth=2,
+                     color=colors[i], label=f"{scenario.capitalize()} Scenario")
 
-            for year_data in sector_data:
-                for sector in sectors:
-                    sector_values[sector].append(year_data[sector]['value'] / 1e6)  # Convert to millions
+        # Plot natural efficiency improvement if available
+        if 'natural_efficiency' in results:
+            plt.plot(years, results['natural_efficiency'] * 100, 'k--', linewidth=2,
+                     label='Natural Efficiency Improvement')
 
-            # Create stacked bar chart
-            bottom = np.zeros(len(years))
-            colors = ['#8fbc8f', '#f4a460', '#778899', '#4682b4']
-
-            for i, sector in enumerate(sectors):
-                plt.bar(years, sector_values[sector], bottom=bottom, label=f"{sector.capitalize()}", color=colors[i])
-                bottom += np.array(sector_values[sector])
-
-            plt.title(f"Carbon Credit Value by Sector ({scenario.capitalize()} Scenario)", fontsize=15)
-            plt.xlabel("Year", fontsize=12)
-            plt.ylabel("Carbon Credit Value (Million USD)", fontsize=12)
-            plt.grid(True, alpha=0.3)
-            plt.legend(loc='best', fontsize=12)
-            plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'sector_value.png'), dpi=300)
-            plt.close()
-
-        # 2. Price Trajectory
-        plt.figure(figsize=(12, 6))
-
-        # Get price data for different sectors from the first scenario
-        first_scenario = list(carbon_credits.keys())[0]
-        if 'sector_breakdown' in carbon_credits[first_scenario]:
-            sector_data = carbon_credits[first_scenario]['sector_breakdown']
-            sectors = ['agriculture', 'solar', 'industrial', 'building', 'average']
-
-            # Extract price trajectories
-            price_data = {sector: [] for sector in sectors}
-
-            # Get sector prices
-            for year_idx, year_data in enumerate(sector_data):
-                for sector in sectors:
-                    if sector == 'average':
-                        price_data[sector].append(carbon_credits[first_scenario]['carbon_prices'][year_idx])
-                    else:
-                        price_data[sector].append(year_data[sector]['price'])
-
-            # Plot price trajectories
-            colors = ['#8fbc8f', '#f4a460', '#778899', '#4682b4', '#000000']
-            linestyles = ['-', '--', '-.', ':', '-']
-
-            for i, sector in enumerate(sectors):
-                plt.plot(years, price_data[sector], label=f"{sector.capitalize()}",
-                         color=colors[i], linestyle=linestyles[i], linewidth=2)
-
-            plt.title(f"Carbon Price Projections by Sector", fontsize=15)
-            plt.xlabel("Year", fontsize=12)
-            plt.ylabel("Carbon Price (USD/tonne CO2)", fontsize=12)
-            plt.grid(True, alpha=0.3)
-            plt.legend(loc='best', fontsize=12)
-            plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'price_projections.png'), dpi=300)
-            plt.close()
-
-        # 3. Cost comparison - costs vs revenue
-        plt.figure(figsize=(12, 6))
-
-        if scenario in carbon_credits:
-            registration_costs = carbon_credits[scenario]['registration_cost'] / 1e6
-            verification_costs = carbon_credits[scenario]['verification_cost'] / 1e6
-            management_fees = carbon_credits[scenario]['management_fee'] / 1e6
-            credit_revenue = carbon_credits[scenario]['annual_value'] / 1e6
-            net_revenue = carbon_credits[scenario]['net_value'] / 1e6
-
-            # Create stacked bar for costs and a line for revenue
-            plt.bar(years, registration_costs, label="Registration Costs", color='#CD5C5C', alpha=0.7)
-            plt.bar(years, verification_costs, bottom=registration_costs, label="Verification Costs", color='#F08080',
-                    alpha=0.7)
-            plt.bar(years, management_fees, bottom=registration_costs+verification_costs,
-                    label="Management Fees", color='#FA8072', alpha=0.7)
-            plt.plot(years, credit_revenue, 'k-', linewidth=2, label="Gross Revenue")
-            plt.plot(years, net_revenue, 'g--', linewidth=2, label="Net Revenue")
-
-            plt.title(f"Carbon Credit Costs vs Revenue ({scenario.capitalize()} Scenario)", fontsize=15)
-            plt.xlabel("Year", fontsize=12)
-            plt.ylabel("Million USD", fontsize=12)
-            plt.grid(True, alpha=0.3)
-            plt.legend(loc='best', fontsize=12)
-            plt.tight_layout()
-            plt.savefig(os.path.join(output_dir, 'costs_vs_revenue.png'), dpi=300)
-            plt.close()
-
-        # 4. Loan Repayment Visualization
-        plt.figure(figsize=(12, 6))
-
-        # Assuming loan repayment data is passed to this function
-        # For now, let's just create a placeholder plot to be updated later
-
-        plt.title("Loan Repayment Projections", fontsize=15)
+        plt.title(f"{country} - Yearly Energy Consumption Reduction", fontsize=15)
         plt.xlabel("Year", fontsize=12)
-        plt.ylabel("Million USD", fontsize=12)
+        plt.ylabel("Reduction from BAU (%)", fontsize=12)
         plt.grid(True, alpha=0.3)
         plt.legend(loc='best', fontsize=12)
         plt.tight_layout()
-        plt.savefig(os.path.join(output_dir, 'loan_repayment.png'), dpi=300)
+        plt.savefig(os.path.join(output_dir, 'yearly_reduction.png'), dpi=300)
         plt.close()
 
-    def _generate_report(self, country, forecasts, results, benefits, carbon_credits):
-        """
-        Generate a summary report for the energy efficiency analysis
-
-        Parameters:
-        -----------
-        country : str
-            Country name
-        forecasts : DataFrame
-            Combined forecast data
-        results : dict
-            Scenario results
-        benefits : dict
-            Benefits calculations
-        carbon_credits : dict
-            Carbon credit calculations
-        """
-        print(f"  Generating summary report for {country}")
-
-        output_dir = os.path.join('output', country, 'efficiency_analysis')
-        report_file = os.path.join(output_dir, 'energy_efficiency_report.md')
-
-        with open(report_file, 'w') as f:
-            f.write(f"# Energy Efficiency Analysis for {country}\n\n")
-            f.write(f"*Generated on {datetime.now().strftime('%Y-%m-%d')}*\n\n")
-
-            f.write("## Executive Summary\n\n")
-
-            # Summary of key findings
-            f.write("### Key Findings\n\n")
-
-            for scenario in benefits['economic']:
-                roi = benefits['economic'][scenario]['roi'] * 100
-                payback = benefits['economic'][scenario]['payback_period']
-                total_benefit = np.sum(benefits['economic'][scenario]['net_benefit']) / 1e9
-
-                total_co2 = np.sum(benefits['environmental'][scenario]['total_co2_reduction']) / 1e6
-                carbon_value = np.sum(carbon_credits[scenario]['annual_value']) / 1e6
-
-                f.write(f"**{scenario.capitalize()} Efficiency Scenario:**\n\n")
-                f.write(f"- Return on Investment: {roi:.1f}%\n")
-                f.write(
-                    f"- Payback Period: {payback:.1f} years\n" if payback else "- Payback Period: Beyond analysis timeframe\n")
-                f.write(f"- Total Economic Benefit: ${total_benefit:.2f} billion\n")
-                f.write(f"- Total CO2 Reduction: {total_co2:.2f} million metric tons\n")
-                f.write(f"- Potential Carbon Credit Value: ${carbon_value:.2f} million\n\n")
-
-            # Recommendations
-            f.write("### Recommendations\n\n")
-
-            # Find best scenario based on ROI
-            rois = {s: benefits['economic'][s]['roi'] for s in benefits['economic']}
-            best_scenario = max(rois, key=rois.get)
-
-            f.write(
-                f"1. **Investment Strategy:** The {best_scenario.capitalize()} efficiency scenario offers the best return on investment.\n")
-            f.write(
-                "2. **Carbon Credit Aggregation:** Creating a national energy efficiency program that aggregates smaller projects can increase carbon credit value by approximately 20%.\n")
-            f.write(
-                "3. **NDC Enhancement:** Energy efficiency improvements can significantly contribute to meeting and exceeding NDC targets.\n")
-            f.write(
-                "4. **Climate Resilience:** Implementing energy efficiency measures will reduce vulnerability to rising energy costs due to climate change.\n\n")
-
-            # Detailed analysis
-            f.write("## Detailed Analysis\n\n")
-
-            f.write("### Climate Change Impacts\n\n")
-
-            f.write(
-                "All scenarios incorporate climate change impacts, which are projected to increase energy demand due to:\n\n")
-            f.write(
-                f"- Rising temperatures (projected {self.climate_factors['temperature_increase'] * 100:.1f}% increase per year)\n")
-            f.write(
-                f"- Increased cooling demand ({self.climate_factors['cooling_demand_increase'] * 100:.1f}% increase per year)\n")
-            f.write(
-                f"- Economic costs from extreme weather events (estimated {self.climate_factors['extreme_weather_cost'] * 100:.1f}% of GDP per year)\n\n")
-
-            f.write("### Energy Efficiency Scenarios\n\n")
-
-            for scenario, params in self.efficiency_scenarios.items():
-                f.write(f"**{scenario.capitalize()} Scenario:**\n\n")
-                f.write(f"- Energy Demand Reduction: {params['demand_reduction'] * 100:.1f}%\n")
-                f.write(f"- CO2 Emission Reduction: {params['co2_reduction'] * 100:.1f}%\n")
-                f.write(f"- Implementation Cost: {params['implementation_cost'] * 100:.1f}% of GDP\n\n")
-
-            f.write("### Carbon Credit Opportunities\n\n")
-
-            # Thailand-specific carbon pricing info
-            if country.lower() == 'thailand':
-                f.write(
-                    "The carbon market offers excellent opportunities for carbon credit generation:\n\n")
-                f.write("- **Current Carbon Prices by Sector:**\n")
-                f.write(f"  - Agriculture/Forestry: ${self.carbon_market.prices['agriculture']} per ton CO2\n")
-                f.write(f"  - Solar Energy: ${self.carbon_market.prices['solar']} per ton CO2\n")
-                f.write(f"  - Industrial: ${self.carbon_market.prices['industrial']} per ton CO2\n")
-                f.write(f"  - Building: ${self.carbon_market.prices['building']} per ton CO2\n")
-                f.write(f"  - Market Average: ${self.carbon_market.prices['average']} per ton CO2\n\n")
-            else:
-                f.write("Energy efficiency projects provide excellent opportunities for carbon credit generation:\n\n")
-                f.write("- **Pricing Trajectory:**\n")
-                f.write(f"  - Current price: ${self.carbon_credit_pricing['current']} per ton CO2\n")
-                f.write(f"  - 2030 projected price: ${self.carbon_credit_pricing['projected_2030']} per ton CO2\n")
-                f.write(f"  - 2035 projected price: ${self.carbon_credit_pricing['projected_2035']} per ton CO2\n\n")
-
-            f.write("- **Aggregation Benefits:**\n")
-            f.write("  - Small-scale efficiency projects can be difficult to register individually\n")
-            f.write("  - Aggregating projects at national or sectoral level increases viability\n")
-            f.write("  - Aggregated projects typically receive 15-20% price premiums\n")
-            f.write("  - Reduces transaction costs and monitoring requirements\n\n")
-
-            f.write("### NDC Implications\n\n")
-
-            f.write(
-                "Energy efficiency improvements can significantly contribute to Nationally Determined Contributions (NDCs):\n\n")
-
-            # Find 2030 values if available
-            years = results['years']
-            bau_2030_index = np.where(years == 2030)[0][0] if 2030 in years else -1
-
-            if bau_2030_index >= 0:
-                bau_2030_co2 = results['bau']['co2'][bau_2030_index]
-
-                for scenario, data in results['scenarios'].items():
-                    scenario_2030_co2 = data['co2'][bau_2030_index]
-                    reduction = (bau_2030_co2 - scenario_2030_co2) / bau_2030_co2 * 100
-
-                    f.write(f"- **{scenario.capitalize()} Scenario:** {reduction:.1f}% reduction from BAU by 2030\n")
-
-                f.write(
-                    "\nThese reductions can be included in updated NDC submissions to strengthen national climate commitments.\n\n")
-
-            f.write("## Conclusion\n\n")
-
-            f.write(
-                "Energy efficiency investments represent a win-win opportunity for economic development and climate action. By implementing the recommended efficiency measures, " +
-                f"{country} can achieve significant energy cost savings, generate valuable carbon credits, and make substantial progress toward meeting its climate commitments.\n\n")
-
-            f.write(
-                "The analysis shows that even accounting for implementation costs, energy efficiency improvements provide positive returns on investment " +
-                "while building resilience against climate change impacts and rising energy costs.\n\n")
-
-            f.write(
-                "*Note: This analysis is based on forecasted data and should be revised with more detailed country-specific information for implementation planning.*\n")
-
-        print(f"  Report saved to {report_file}")
-
-    def _generate_program_report(self, country, forecasts, results, benefits, carbon_credits, loan_repayment):
-        """
-        Generate a comprehensive report for the financing program
-
-        Parameters:
-        -----------
-        country : str
-            Country name
-        forecasts : DataFrame
-            Combined forecast data
-        results : dict
-            Scenario results
-        benefits : dict
-            Benefits calculations
-        carbon_credits : dict
-            Carbon credit calculations
-        loan_repayment : dict
-            Loan repayment analysis
-        """
-        print(f"  Generating program report for {country}")
-
-        output_dir = os.path.join('output', country, 'efficiency_analysis')
-        report_file = os.path.join(output_dir, 'financing_program_report.md')
-
-        with open(report_file, 'w') as f:
-            f.write(f"# Low-Carbon City Financing Program - {country}\n\n")
-            f.write(f"*Generated on {datetime.now().strftime('%Y-%m-%d')}*\n\n")
-
-            f.write("## Executive Summary\n\n")
-
-            # Use medium scenario as default for summary
-            scenario = 'medium'
-
-            if scenario in carbon_credits and scenario in benefits['economic']:
-                roi = benefits['economic'][scenario]['roi'] * 100
-                payback = loan_repayment[scenario]['payback_period'] if loan_repayment and scenario in loan_repayment else None
-
-                total_co2 = np.sum(carbon_credits[scenario]['annual_credits']) / 1e6
-                carbon_value = np.sum(carbon_credits[scenario]['annual_value']) / 1e6
-                management_fee = carbon_value * self.carbon_market.management_fee_percent  # 10% management fee
-                net_carbon_value = carbon_value - management_fee
-
-                energy_savings = np.sum(benefits['economic'][scenario]['energy_savings_twh'])
-                energy_savings_value = np.sum(benefits['economic'][scenario]['energy_cost_savings']) / 1e9
-
-                f.write(f"The proposed low-carbon city financing program for {country} demonstrates significant potential for both emissions reductions and economic benefits:\n\n")
-
-                f.write(f"- **Program Loan Amount:** ${self.loan_amount/1e6:.1f} million\n")
-                f.write(f"- **Total CO₂ Reduction:** {total_co2:.2f} million tons\n")
-                f.write(f"- **Carbon Credit Value:** ${carbon_value:.2f} million\n")
-                f.write(f"- **Management Fee:** ${management_fee:.2f} million\n")
-                f.write(f"- **Net Carbon Revenue:** ${net_carbon_value:.2f} million\n")
-                f.write(f"- **Energy Savings:** {energy_savings:.2f} TWh (${energy_savings_value:.2f} billion)\n")
-                f.write(f"- **Return on Investment:** {roi:.1f}%\n")
-
-                if payback:
-                    f.write(f"- **Loan Repayment Period:** {payback:.1f} years\n\n")
-                else:
-                    f.write(f"- **Loan Repayment:** Beyond program timeframe\n\n")
-
-            # Project Structure & Components
-            f.write("## Program Structure & Components\n\n")
-
-            f.write("### Financing Modality\n\n")
-            f.write(f"- ${self.loan_amount/1e6:.1f} million loan for implementation of energy efficiency and renewable energy projects\n")
-            f.write("- Focus on large-scale public infrastructure and community-level initiatives\n")
-            f.write("- Disbursement linked to verified emissions reductions and project milestones\n\n")
-
-            f.write("### Implementation Structure\n\n")
-            f.write("- **Public Sector Organizations:** Implementing large-scale infrastructure projects\n")
-            f.write("- **Local Financial Institutions:** Financing community-level projects\n")
-            f.write("- **Coordinating Entity:** Aggregating and monetizing carbon credits\n")
-            f.write("- **Program Management:** Oversight, MRV, and compliance\n\n")
-
-            # Carbon Market Integration
-            f.write("## Carbon Market Integration\n\n")
-
-            if scenario in carbon_credits and 'sector_breakdown' in carbon_credits[scenario]:
-                sector_data = carbon_credits[scenario]['sector_breakdown']
-                sectors = ['agriculture', 'solar', 'industrial', 'building']
-
-                f.write("### Carbon Credit Potential by Sector\n\n")
-                f.write("| Sector | Credit Volume (MtCO2) | Credit Value (Million USD) | Share of Total Value |\n")
-                f.write("|--------|------------------------|----------------------------|---------------------|\n")
-
-                for sector in sectors:
-                    # Sum up credits and value across all years
-                    total_credits = sum(year_data[sector]['credits'] for year_data in sector_data) / 1e6
-                    total_value = sum(year_data[sector]['value'] for year_data in sector_data) / 1e6
-                    total_all_sectors = sum(sum(year_data[s]['value'] for s in sectors) for year_data in sector_data) / 1e6
-                    share = (total_value / total_all_sectors) * 100
-
-                    f.write(f"| {sector.capitalize()} | {total_credits:.2f} | ${total_value:.2f} | {share:.1f}% |\n")
-
-                f.write("\n")
-
-            # Loan Repayment Analysis
-            if loan_repayment:
-                f.write("## Loan Repayment Analysis\n\n")
-
-                f.write("The program integrates carbon credit revenues with energy cost savings to accelerate loan repayment.\n\n")
-
-                for scenario_name, repayment in loan_repayment.items():
-                    f.write(f"### {scenario_name.capitalize()} Scenario\n\n")
-
-                    if repayment['payback_period'] is not None:
-                        f.write(f"- **Loan Amount:** ${repayment['loan_amount']/1e6:.1f} million\n")
-                        f.write(f"- **Interest Rate:** {repayment['interest_rate']*100:.1f}%\n")
-                        f.write(f"- **Grace Period:** {repayment['grace_period']} years\n")
-                        f.write(f"- **Payback Period:** {repayment['payback_period']:.2f} years\n")
-                        f.write(f"- **Payback Completion:** Year {repayment['payback_year']:.1f}\n")
-
-                        total_energy = np.sum(repayment['energy_payment']) / 1e6
-                        total_carbon = np.sum(repayment['carbon_payment']) / 1e6
-                        total_payment = total_energy + total_carbon
-
-                        f.write(f"- **Total Energy Savings Payment:** ${total_energy:.2f} million ({(total_energy / total_payment * 100):.1f}%)\n")
-                        f.write(f"- **Total Carbon Credit Payment:** ${total_carbon:.2f} million ({(total_carbon / total_payment * 100):.1f}%)\n")
-                        f.write(f"- **Total Repayment Amount:** ${total_payment:.2f} million\n\n")
-                    else:
-                        f.write("- No complete payback within the analysis timeframe.\n\n")
-
-                    f.write("#### Annual Repayment Schedule\n\n")
-                    f.write("| Year | Energy Payment ($M) | Carbon Payment ($M) | Total Payment ($M) | Remaining Balance ($M) |\n")
-                    f.write("|------|---------------------|---------------------|--------------------|-----------------------|\n")
-
-                    for i, year in enumerate(repayment['years']):
-                        energy_payment = repayment['energy_payment'][i] / 1e6
-                        carbon_payment = repayment['carbon_payment'][i] / 1e6
-                        total_payment = repayment['total_payment'][i] / 1e6
-                        remaining = repayment['remaining_balance'][i] / 1e6
-
-                        f.write(f"| {year} | ${energy_payment:.2f} | ${carbon_payment:.2f} | ${total_payment:.2f} | ${max(0, remaining):.2f} |\n")
-
-                    f.write("\n")
-
-            # NDC Contribution
-            f.write("## Climate Policy Contribution\n\n")
-
-            f.write("The program will significantly contribute to climate mitigation targets and policy objectives:\n\n")
-
-            # Calculate contribution based on 2030 values
-            if 'high' in carbon_credits and 'bau' in results and 2030 in results['years']:
-                idx_2030 = list(results['years']).index(2030)
-                bau_emissions = results['bau']['co2'][idx_2030] * results['bau']['population'][idx_2030]
-
-                for scenario, data in results['scenarios'].items():
-                    scenario_emissions = data['co2'][idx_2030] * results['bau']['population'][idx_2030]
-                    reduction_percentage = (bau_emissions - scenario_emissions) / bau_emissions * 100
-                    f.write(f"- **{scenario.capitalize()} Scenario:** {reduction_percentage:.1f}% reduction from BAU by 2030\n")
-
-                f.write("\nThese reductions can be used for:\n")
-                f.write("- Fulfilling national climate commitments\n")
-                f.write("- Supporting carbon neutrality goals\n")
-                f.write("- Developing domestic carbon market infrastructure\n\n")
-
-            # Recommendations
-            f.write("## Recommendations\n\n")
-
-            # Find best scenario based on ROI or payback
-            best_scenario = None
-            if loan_repayment:
-                payback_periods = {s: loan_repayment[s]['payback_period'] for s in loan_repayment if loan_repayment[s]['payback_period']}
-                if payback_periods:
-                    best_scenario = min(payback_periods, key=payback_periods.get)
-
-            if best_scenario:
-                f.write(f"1. **Implementation Strategy:** The {best_scenario.capitalize()} efficiency scenario offers the best balance of climate impact and financial sustainability.\n")
-            else:
-                # Fall back to ROI comparison
-                rois = {s: benefits['economic'][s]['roi'] for s in benefits['economic']}
-                best_scenario = max(rois, key=rois.get)
-                f.write(f"1. **Implementation Strategy:** The {best_scenario.capitalize()} efficiency scenario offers the best return on investment.\n")
-
-            f.write("2. **Credit Aggregation:** Aggregating carbon credits from multiple projects increases marketability and value.\n")
-            f.write("3. **Sector Prioritization:** Focus on sectors with highest carbon credit value and implementation feasibility.\n")
-            f.write("4. **MRV Systems:** Implement robust monitoring and verification to maximize credit issuance.\n")
-            f.write("5. **Market Engagement:** Actively engage with international carbon credit buyers to secure premium prices.\n\n")
-
-            # Conclusion
-            f.write("## Conclusion\n\n")
-            f.write(f"The low-carbon city financing program presents a strategic approach to accelerating climate action in {country}. By monetizing carbon credits and capturing energy cost savings, the program creates a sustainable financing mechanism that can transform urban infrastructure while meeting climate goals.\n\n")
-            f.write("The program's integrated approach leverages international climate finance while building domestic capacity for low-carbon development. With proper implementation and carbon market integration, the initiative can deliver substantial environmental benefits while maintaining financial sustainability.\n\n")
-            f.write("*Note: This analysis is based on forecasted data and current market conditions. Results will vary based on implementation effectiveness and market developments.*\n")
-
-        print(f"  Report saved to {report_file}")
+        # Thailand-specific visualizations
+        if is_thailand:
+            # 8. Adoption Curves
+            plt.figure(figsize=(12, 8))
+
+            for i, (scenario, data) in enumerate(results['scenarios'].items()):
+                if 'cumulative_adoption' in data:
+                    plt.plot(years, data['cumulative_adoption'] * 100, marker='o', linestyle='-',
+                             linewidth=2, color=colors[i], label=f"{scenario.capitalize()} Adoption")
+                elif 'adoption_rates' in benefits['economic'].get(scenario, {}):
+                    # Try to get from benefits if not in results
+                    plt.plot(years, benefits['economic'][scenario]['cumulative_adoption'] * 100, marker='o',
+                             linestyle='-', linewidth=2, color=colors[i],
+                             label=f"{scenario.capitalize()} Adoption")
+
+            plt.title(f"{country} - Energy Efficiency Technology Adoption Curves", fontsize=15)
+            plt.xlabel("Year", fontsize=12)
+            plt.ylabel("Cumulative Adoption (%)", fontsize=12)
+            plt.grid(True, alpha=0.3)
+            plt.legend(loc='best', fontsize=12)
+            plt.tight_layout()
+            plt.savefig(os.path.join(output_dir, 'adoption_curves.png'), dpi=300)
+            plt.close()
+
+            # 9. Appliance Turnover Impact
+            if 'natural_efficiency' in results:
+                plt.figure(figsize=(12, 8))
+
+                # Plot natural turnover efficiency improvement
+                plt.plot(years, results['natural_efficiency'] * 100, 'k-', linewidth=3,
+                         label='Natural Turnover Efficiency')
+
+                # Plot accelerated turnover for different scenarios
+                for i, (scenario, data) in enumerate(results['scenarios'].items()):
+                    if 'params' in data and 'appliance_turnover_factor' in data['params']:
+                        turnover_factor = data['params']['appliance_turnover_factor']
+                        if turnover_factor > 1.0:
+                            # Calculate accelerated efficiency
+                            accelerated_efficiency = 1 - (1 - results['natural_efficiency']) * turnover_factor
+                            plt.plot(years, accelerated_efficiency * 100, linestyle='--', linewidth=2,
+                                     color=colors[i], label=f"{scenario.capitalize()} Accelerated Turnover")
+
+                plt.title(f"{country} - Impact of Appliance Turnover on Efficiency", fontsize=15)
+                plt.xlabel("Year", fontsize=12)
+                plt.ylabel("Efficiency Improvement (%)", fontsize=12)
+                plt.grid(True, alpha=0.3)
+                plt.legend(loc='best', fontsize=12)
+                plt.tight_layout()
+                plt.savefig(os.path.join(output_dir, 'appliance_turnover.png'), dpi=300)
+                plt.close()
+
+            # 10. Historical Energy Efficiency Investments
+            if hasattr(self, 'thailand_ee_data') and 'historical_investments' in self.thailand_ee_data:
+                plt.figure(figsize=(12, 6))
+
+                # Plot historical data
+                historical = self.thailand_ee_data['historical_investments']
+                plt.bar(historical['Year'], historical['Investment_Million_USD'], color='skyblue', alpha=0.7,
+                        label='Historical Investments')
+
+                # Plot trend line
+                z = np.polyfit(historical['Year'], historical['Investment_Million_USD'], 1)
+                p = np.poly1d(z)
+                plt.plot(historical['Year'], p(historical['Year']), 'r--', label='Trend')
+
+                # Add future projection if we have implementation costs
+                if len(results['scenarios']) > 0:
+                    # Take medium scenario if available, otherwise first scenario
+                    scenario_key = 'medium' if 'medium' in results['scenarios'] else list(results['scenarios'].keys())[0]
+                    if 'implementation_cost' in results['scenarios'][scenario_key]:
+                        future_years = results['years']
+                        future_investments = results['scenarios'][scenario_key]['implementation_cost'] / 1e6  # to millions
+                        plt.plot(future_years, future_investments, 'g-', marker='o',
+                                 label=f"Projected ({scenario_key.capitalize()} Scenario)")
+
+                plt.title(f"{country} - Historical & Projected Energy Efficiency Investments", fontsize=15)
+                plt.xlabel("Year", fontsize=12)
+                plt.ylabel("Million USD", fontsize=12)
+                plt.grid(True, alpha=0.3)
+                plt.legend(loc='best', fontsize=12)
+                plt.tight_layout()
+                plt.savefig(os.path.join(output_dir, 'historical_investments.png'), dpi=300)
+                plt.close()
 
     def analyze_country(self, country):
         """
@@ -1604,24 +1444,11 @@ class EnergyEfficiencyAnalyzer:
             # Calculate carbon credits
             carbon_credits = self._calculate_carbon_credits(country, forecasts, results)
 
-            # Calculate loan repayment for financing program
-            loan_repayment = None
-            if is_thailand:
-                loan_repayment = self._calculate_loan_repayment(country, results, benefits, carbon_credits)
-
-            # Generate standard visualizations
+            # Generate visualizations
             self._create_visualizations(country, forecasts, results, benefits, carbon_credits)
 
-            # For Thailand, generate additional visualizations
-            if is_thailand:
-                self._create_thailand_specific_visualizations(country, results, benefits, carbon_credits)
-
-            # Generate standard report
-            self._generate_report(country, forecasts, results, benefits, carbon_credits)
-
-            # Generate financing program report for Thailand
-            if is_thailand:
-                self._generate_program_report(country, forecasts, results, benefits, carbon_credits, loan_repayment)
+            print(f"\nCompleted energy efficiency analysis for {country}")
+            print(f"Check output/efficiency_analysis/{country} for results and visualizations")
 
             return results
 
@@ -1699,11 +1526,3 @@ def run_efficiency_analysis(base_forecaster):
     print("Check the 'efficiency_analysis' folder for each country for detailed reports and visualizations.")
 
     return results
-
-
-# Standalone mode for direct execution
-if __name__ == "__main__":
-    import sys
-
-    print("Energy Efficiency Analyzer")
-    print("--------------------------------")
